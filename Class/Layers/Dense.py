@@ -3,12 +3,13 @@ from Class.Layers import LayerBase
 
 
 class DenseLayer(LayerBase.__LayerBase):
-    def __init__(self, layer_size, activation_function, activation_function_with_derivative, is_output_layer=False, use_bias=True):
+    def __init__(self, layer_size, activation_function, activation_function_with_derivative, is_output_layer=False, use_bias=True, normalization_function=None):
         self.weight_matrix = []
         self.biases = np.zeros((layer_size, 1))
         self.use_bias = use_bias
         self.activation_function = activation_function
         self.activation_function_with_derivative = activation_function_with_derivative
+        self.normalization = normalization_function
         super().__init__('dense', layer_size, is_output_layer)
 
     def initialize(self, previous_layer_size=0):
@@ -17,16 +18,32 @@ class DenseLayer(LayerBase.__LayerBase):
         self.cache['back_activation_values'] = []
 
     def compute(self, inputs, store):
+        # Aggregate inputs, weights, and biases
         aggregation_result = np.dot(self.weight_matrix, inputs) + self.biases
-        if store or self.is_output_layer:
+
+        # If backpropagation is needed, store d_activation values
+        if store:
             activations, sigma_primes = self.activation_function_with_derivative(aggregation_result)
-            self.cache['activation_values'], self.cache['sigma_primes'] = activations, sigma_primes
+            self.cache['sigma_primes'] = sigma_primes
         else:
             activations = self.activation_function(aggregation_result)
+
+        # Normalize activation vector if condition
+        # if not self.is_output_layer and self.normalization is not None:
+        #     activations = self.normalization(activations)
+
+        # Store activations if asked, or for output layer
+        if store or self.is_output_layer:
+            self.cache['activation_values'] = activations
+
         return activations
 
     def compute_backward(self, inputs):
         back_activation_values = self.cache['sigma_primes'] * inputs
+
+        if self.normalization is not None:
+            back_activation_values = self.normalization(back_activation_values)
+
         self.cache['back_activation_values'] = back_activation_values
 
         # Compute previous layer's inputs

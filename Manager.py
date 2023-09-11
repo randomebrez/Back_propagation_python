@@ -2,39 +2,51 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import Tools.OpenmlGateway as openml_gateway
-from Class import NetworkBuilder as builder
 
 
 def get_dataset(dataset_id, feature_class, normalization_constant, batch_size=100):
-    return openml_gateway.get_data_set_normalized(dataset_id, feature_class, normalization_constant, batch_size=batch_size)
+    # Call to openML server
+    ds_inputs, ds_targets = openml_gateway.get_data_set_normalized(dataset_id, feature_class, normalization_constant, batch_size=batch_size)
+    return ds_inputs, ds_targets
 
 
-def back_prop_batch_on_dataset(ds_inputs, ds_targets, hidden_layer_sizes, loss_function, loss_function_derivative,
-                               initial_learning_rate=0.1, final_learning_rate=0.01, learning_rate_update_number=10, epochs=100):
+def train_network(ds_inputs, ds_targets, network, train_model):
     start = time.time()
 
-    # Get inputs
+    # Split dataset
     training_inputs, training_targets = ds_inputs[0], ds_targets[0]
     test_inputs, test_targets = ds_inputs[1], ds_targets[1]
 
-    # Build network
-    input_size = np.shape(training_inputs[0])[0]
-    output_size = np.shape(training_targets[0])[0]
-    network_builder = builder.NetworkBuilder(input_size, output_size)
-    #network = network_builder.build_dense_network(hidden_layer_sizes)
-    network = network_builder.build_dense_network_softmax_output(hidden_layer_sizes)
+    # Test network before training
+    pre_train_test_result = network.test(test_inputs, test_targets, train_model)
 
-    # Run network
-    pre_train_test_result = network.test(test_inputs, test_targets, loss_function, loss_function_derivative)
-
+    # Train network
     train_batch_cost_fct = []
-    for i in range(epochs):
-        cost_function = network.train(training_inputs, training_targets, loss_function, loss_function_derivative, initial_learning_rate, final_learning_rate, learning_rate_update_number)
+    train_batch_mean_cost_fct = []
+
+    for i in range(train_model.epochs):
+        cost_function = network.train(training_inputs, training_targets, train_model)
         train_batch_cost_fct = np.concatenate((train_batch_cost_fct, cost_function))
-        print("Run {0} done. Mean error : {1}".format(i + 1, np.mean(cost_function)))
+        mean_cost_fct = np.mean(cost_function)
+        train_batch_mean_cost_fct.append(mean_cost_fct)
+        print("Run {0} done. Mean error : {1}".format(i + 1, mean_cost_fct))
 
-    post_train_test_result = network.test(test_inputs, test_targets, loss_function, loss_function_derivative)
+    # Test network after training
+    post_train_test_result = network.test(test_inputs, test_targets, train_model)
 
+    tick = time.time()
+    print('Execution time of \'back_prop_batch_on_dataset\' : {0}'.format(tick - start))
+
+    return {
+        'pre_train_test': pre_train_test_result,
+        'batch_costs': train_batch_cost_fct,
+        'mean_batch_costs': train_batch_mean_cost_fct,
+        'post_train_test': post_train_test_result
+    }
+
+
+def plot_result(pre_train_test_result, train_batch_costs, mean_batch_costs, post_train_test_result):
+    start = time.time()
     # Plotting
     # for i in range(10):
     #     random_batch = np.random.randint(0, len(training_inputs))
@@ -44,7 +56,8 @@ def back_prop_batch_on_dataset(ds_inputs, ds_targets, hidden_layer_sizes, loss_f
     #     compare_image(random_input, network_output)
 
     x_test = np.arange(1, len(pre_train_test_result['accuracy']) + 1)
-    x_train = np.arange(1, len(train_batch_cost_fct) + 1)
+    x_train = np.arange(1, len(train_batch_costs) + 1)
+    x_train_mean = np.linspace(0, len(x_train), num=len(mean_batch_costs))
 
     fig, axs = plt.subplots(1, 3)
     axs[0].plot(x_test, pre_train_test_result['accuracy'], 'r-')
@@ -55,13 +68,15 @@ def back_prop_batch_on_dataset(ds_inputs, ds_targets, hidden_layer_sizes, loss_f
     axs[1].plot(x_test, post_train_test_result['cost_function'], 'b-')
     axs[1].set_ylim(bottom=0)
     axs[1].set_title('Cost on test batches before & after training')
-    axs[2].plot(x_train, train_batch_cost_fct, 'b')
+    axs[2].plot(x_train, train_batch_costs, 'b')
+    axs[2].plot(x_train_mean, mean_batch_costs, '-r')
     axs[2].set_title('Cost evolution during training')
     axs[2].set_ylim(bottom=0)
 
     tick = time.time()
-    print('Execution time of \'back_prop_batch_on_dataset\' : {0}'.format(tick - start))
+    print('Plotting time : {0}'.format(tick - start))
     plt.show()
+
 
 def compare_image(input, target):
     input.shape = (28, 28)
