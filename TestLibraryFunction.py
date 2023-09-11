@@ -40,10 +40,13 @@ def test_dense_1_hidden(hidden_activation, normalization_function=''):
         epochs=30)
 
     # Run model
-    results = manager.train_network(ds_inputs, ds_targets, network, model_parameters)
+    pre_train_result = manager.test_network(ds_inputs, ds_targets, network, model_parameters)
+    train_results = manager.train_network(ds_inputs, ds_targets, network, model_parameters)
+    post_train_test = manager.test_network(ds_inputs, ds_targets, network, model_parameters)
 
     # Plot results
-    ph.plot_perceptron_result(results['pre_train_test'], results['batch_costs'], results['mean_batch_costs'], results['post_train_test'])
+    ph.plot_perceptron_result(pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test)
+    return network
 
 
 def test_auto_encoder(hidden_activation, normalization_function=''):
@@ -57,7 +60,7 @@ def test_auto_encoder(hidden_activation, normalization_function=''):
     input_size = np.shape(ds_inputs[0][0])[0]
     output_size = np.shape(ds_inputs[0][0])[0]
     # Choose hidden layer sizes
-    hidden_layer_sizes = [700, 100, 700]
+    hidden_layer_sizes = [800, 300, 32, 300, 800]
 
     # Build network
     network_builder = builder.NetworkBuilder(input_size, output_size)
@@ -81,7 +84,10 @@ def test_auto_encoder(hidden_activation, normalization_function=''):
         epochs=20)
 
     # Run model
-    results = manager.train_network(ds_inputs, ds_inputs, network, model_parameters)
+    pre_train_result = manager.test_network(ds_inputs, ds_inputs, network, model_parameters)
+    train_results = manager.train_network(ds_inputs, ds_inputs, network, model_parameters)
+    post_train_test = manager.test_network(ds_inputs, ds_inputs, network, model_parameters)
 
     # Plot results
-    ph.plot_auto_encoder_results(network, ds_inputs[0], results['pre_train_test'], results['batch_costs'], results['mean_batch_costs'], results['post_train_test'], 25)
+    ph.plot_auto_encoder_results(network, ds_inputs[0], pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test, 25)
+    return network

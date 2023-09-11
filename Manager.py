@@ -14,10 +14,6 @@ def train_network(ds_inputs, ds_targets, network, train_model):
 
     # Split dataset
     training_inputs, training_targets = ds_inputs[0], ds_targets[0]
-    test_inputs, test_targets = ds_inputs[1], ds_targets[1]
-
-    # Test network before training
-    pre_train_test_result = network.test(test_inputs, test_targets, train_model)
 
     # Train network
     train_batch_cost_fct = []
@@ -30,15 +26,25 @@ def train_network(ds_inputs, ds_targets, network, train_model):
         train_batch_mean_cost_fct.append(mean_cost_fct)
         print("Run {0} done. Mean error : {1}".format(i + 1, mean_cost_fct))
 
-    # Test network after training
-    post_train_test_result = network.test(test_inputs, test_targets, train_model)
-
     tick = time.time()
-    print('Execution time of \'back_prop_batch_on_dataset\' : {0}'.format(tick - start))
+    print('Execution time of \'train_network\' : {0}'.format(tick - start))
 
     return {
-        'pre_train_test': pre_train_test_result,
         'batch_costs': train_batch_cost_fct,
-        'mean_batch_costs': train_batch_mean_cost_fct,
-        'post_train_test': post_train_test_result
+        'mean_batch_costs': train_batch_mean_cost_fct
     }
+
+
+def test_network(ds_inputs, ds_targets, network, train_model):
+    start = time.time()
+
+    # Split dataset
+    test_inputs, test_targets = ds_inputs[1], ds_targets[1]
+
+    # Run model
+    test_result = network.test(test_inputs, test_targets, train_model)
+
+    tick = time.time()
+    print('Execution time of \'test_network\' : {0}'.format(tick - start))
+
+    return test_result
