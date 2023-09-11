@@ -58,9 +58,9 @@ class Network:
 
     # Feed forward
     def feed_forward(self, inputs, store=True):
-        next_activations = self.layers[0].compute(inputs, store)
-        for i in range(1, len(self.layers)):
-            next_activations = self.layers[i].compute(next_activations, store)
+        next_activations = inputs
+        for layer in self.layers:
+            next_activations = layer.compute(next_activations, store)
 
     # Backpropagation
     def backprop(self, back_prop_inputs, learning_rate):
@@ -73,8 +73,12 @@ class Network:
             # Update parameters
             self.layers[i].update_weights(self.layers[i - 1].get_activation_values(), learning_rate)
 
+    # Tools
+    def get_outputs(self):
+        return self.layers[self.output_layer_index].get_activation_values()
+
     def compute_error(self, targets, loss_function, loss_function_derivative):
-        outputs = self.layers[self.output_layer_index].get_activation_values()
+        outputs = self.get_outputs()
         back_prop_inputs = loss_function_derivative(outputs, targets)
         mean_cost_function = loss_function(outputs, targets)
         return back_prop_inputs, mean_cost_function
@@ -84,3 +88,7 @@ class Network:
         output_indices = np.argmax(outputs, axis=0)
         labels = np.argmax(targets, axis=0)
         return 100 * np.mean(output_indices == labels)
+
+    def clean_layers_cache(self):
+        for layer in self.layers:
+            layer.clean_cache()

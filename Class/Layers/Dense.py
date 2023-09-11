@@ -14,8 +14,15 @@ class DenseLayer(LayerBase.__LayerBase):
 
     def initialize(self, previous_layer_size=0):
         self.weight_matrix = 0.01 * np.random.rand(self.layer_size, previous_layer_size)
+        self.init_cache()
+
+    def init_cache(self):
         self.cache['sigma_primes'] = []
         self.cache['back_activation_values'] = []
+
+    def clean_cache(self):
+        super().clean_cache()
+        self.init_cache()
 
     def compute(self, inputs, store):
         # Aggregate inputs, weights, and biases
