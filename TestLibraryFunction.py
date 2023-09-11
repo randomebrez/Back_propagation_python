@@ -60,7 +60,7 @@ def test_auto_encoder(hidden_activation, normalization_function=''):
     input_size = np.shape(ds_inputs[0][0])[0]
     output_size = np.shape(ds_inputs[0][0])[0]
     # Choose hidden layer sizes
-    hidden_layer_sizes = [800, 300, 32, 300, 800]
+    hidden_layer_sizes = [700, 100, 700]
 
     # Build network
     network_builder = builder.NetworkBuilder(input_size, output_size)
