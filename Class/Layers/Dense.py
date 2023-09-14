@@ -4,16 +4,18 @@ from Class.Layers import LayerBase
 
 class DenseLayer(LayerBase.__LayerBase):
     def __init__(self, layer_size, activation_function, activation_function_with_derivative, is_output_layer=False, use_bias=True, normalization_function=None):
+        self.output_shape = (layer_size, 0, 0)
         self.weight_matrix = []
         self.biases = np.zeros((layer_size, 1))
         self.use_bias = use_bias
         self.activation_function = activation_function
         self.activation_function_with_derivative = activation_function_with_derivative
         self.normalization = normalization_function
-        super().__init__('dense', layer_size, is_output_layer)
+        super().__init__('dense', is_output_layer)
 
-    def initialize(self, previous_layer_size=0):
-        self.weight_matrix = 0.01 * np.random.rand(self.layer_size, previous_layer_size)
+    def initialize(self, input_shape):
+        previous_layer_size = np.sum(np.asarray(input_shape))
+        self.weight_matrix = 0.01 * np.random.rand(self.output_shape[0], previous_layer_size)
         self.init_cache()
 
     def init_cache(self):

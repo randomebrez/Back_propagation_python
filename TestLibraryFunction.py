@@ -26,7 +26,7 @@ def test_dense_1_hidden(hidden_activation, normalization_function=''):
 
     # Output layer bloc (dense + OneToOne softmax)
     network_builder.add_dense_layer(output_size, 'sigmoid', is_output_layer=True, use_bias=False, normalization_function='')
-    network_builder.add_one_to_one_layer(output_size, 'softmax')
+    network_builder.add_one_to_one_layer('softmax')
 
     network = network_builder.build()
 

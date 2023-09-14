@@ -20,13 +20,16 @@ class NetworkBuilder:
             '': None
         }
 
+    def create_new(self, input_size, output_size):
+        self.wip_network = net.Network(input_size, output_size)
+        self.wip_network.layers.append(i_layer.InputLayer(input_size))
+
     def build(self):
-        layers = self.wip_network.layers
-        previous_layer = layers[0]
-        for index, layer in enumerate(self.wip_network.layers):
-            layer.initialize(previous_layer.layer_size)
+        previous_layer = self.wip_network.layers[0]
+        for index, layer in enumerate(self.wip_network.layers[1:]):
+            layer.initialize(previous_layer.output_shape)
             if layer.is_output_layer:
-                self.wip_network.output_layer_index = index
+                self.wip_network.output_layer_index = index + 1  # since enumerate starts at second item
             previous_layer = layer
 
         return self.wip_network
@@ -36,6 +39,6 @@ class NetworkBuilder:
         layer = d_layer.DenseLayer(layer_size, activations[0], activations[1], is_output_layer, use_bias, self.operations[normalization_function])
         self.wip_network.layers.append(layer)
 
-    def add_one_to_one_layer(self, layer_size, operation: str, is_output_layer=False):
-        layer = oto_layer.OneToOneLayer(layer_size, self.operations[operation], is_output_layer)
+    def add_one_to_one_layer(self, operation: str, is_output_layer=False):
+        layer = oto_layer.OneToOneLayer(self.operations[operation], is_output_layer)
         self.wip_network.layers.append(layer)
