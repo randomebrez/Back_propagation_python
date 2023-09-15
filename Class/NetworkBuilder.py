@@ -3,6 +3,9 @@ import Tools.Computations as computer
 from Class.Layers import Input as i_layer
 from Class.Layers import Dense as d_layer
 from Class.Layers import OneToOne as oto_layer
+from Class.Layers import ConvDot as cd_layer
+from Class.Layers import Convolution as c_layer
+from Class.Layers import Flatten as f_layer
 
 
 class NetworkBuilder:
@@ -41,4 +44,18 @@ class NetworkBuilder:
 
     def add_one_to_one_layer(self, operation: str, is_output_layer=False):
         layer = oto_layer.OneToOneLayer(self.operations[operation], is_output_layer)
+        self.wip_network.layers.append(layer)
+
+    def add_conv_dot_layer(self, filter_number: int, kernel_size: int, stride: int, activation_function: str, is_output_layer=False, use_bias=True, normalization_function=''):
+        activations = self.activation_functions[activation_function]
+        layer = cd_layer.ConvolutionDotLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias, self.operations[normalization_function])
+        self.wip_network.layers.append(layer)
+
+    def add_conv_fft_layer(self, filter_number: int, kernel_size: int, stride: int, activation_function: str, is_output_layer=False, use_bias=True, normalization_function=''):
+        activations = self.activation_functions[activation_function]
+        layer = c_layer.ConvolutionFFTLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias, self.operations[normalization_function])
+        self.wip_network.layers.append(layer)
+
+    def add_flat_layer(self, is_output_layer=False):
+        layer = f_layer.FlatLayer(is_output_layer)
         self.wip_network.layers.append(layer)

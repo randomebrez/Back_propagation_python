@@ -49,6 +49,7 @@ def relu_with_derivative(x):
     return relu, d_relu
 
 
+# probably don't work in higher dimension than 2.
 def softmax(x):
     exp_vector = np.exp(x)
     sum_exp = np.sum(exp_vector, axis=0, keepdims=True)

@@ -1,6 +1,7 @@
 class __LayerBase:
     def __init__(self, layer_type, is_output_layer=False):
         self.layer_type = layer_type
+        self.output_shape = (1, 1, 1)
         self.is_output_layer = is_output_layer
         self.cache = {'activation_values': []}
 

@@ -4,7 +4,6 @@ from Class.Layers import LayerBase
 
 class DenseLayer(LayerBase.__LayerBase):
     def __init__(self, layer_size, activation_function, activation_function_with_derivative, is_output_layer=False, use_bias=True, normalization_function=None):
-        self.output_shape = (layer_size, 0, 0)
         self.weight_matrix = []
         self.biases = np.zeros((layer_size, 1))
         self.use_bias = use_bias
@@ -12,10 +11,11 @@ class DenseLayer(LayerBase.__LayerBase):
         self.activation_function_with_derivative = activation_function_with_derivative
         self.normalization = normalization_function
         super().__init__('dense', is_output_layer)
+        self.output_shape = (1, layer_size, 1)
 
     def initialize(self, input_shape):
-        previous_layer_size = np.sum(np.asarray(input_shape))
-        self.weight_matrix = 0.01 * np.random.rand(self.output_shape[0], previous_layer_size)
+        input_number = np.product(np.asarray(input_shape))
+        self.weight_matrix = 0.01 * np.random.rand(self.output_shape[1], input_number)
         self.init_cache()
 
     def init_cache(self):
@@ -27,6 +27,8 @@ class DenseLayer(LayerBase.__LayerBase):
         self.init_cache()
 
     def compute(self, inputs, store):
+        # format input if needed. For now osef
+
         # Aggregate inputs, weights, and biases
         aggregation_result = np.dot(self.weight_matrix, inputs) + self.biases
 
