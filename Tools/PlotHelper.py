@@ -39,27 +39,26 @@ def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, t
 
     # Compare images
     input_size = network.input_size
-    random_inputs = np.zeros((input_size, number_to_compare))
+    random_inputs = np.zeros((number_to_compare, input_size))
 
     # Select random image in a random batch
     for i in range(number_to_compare):
-        random_batch = np.random.randint(0, len(training_inputs))
-        random_input_index = np.random.randint(0, np.shape(training_inputs[random_batch])[1])
+        random_batch = np.random.randint(0, training_inputs.shape[0])
+        random_input_index = np.random.randint(0, training_inputs.shape[1])
         # Get images to compare
-        random_inputs[:, i] = training_inputs[random_batch][:, random_input_index]
+        random_inputs[i, :] = training_inputs[random_batch, random_input_index, :]
 
     # Compute result
     network.feed_forward(random_inputs, False)
     network_outputs = network.get_outputs()
 
     # Create image bloc (original|sep|output)
-    random_inputs.shape = (28, 28, number_to_compare)
-    network_outputs.shape = (28, 28, number_to_compare)
-    image_separation = np.ones((28, 2))
-
-    plot_output = np.zeros((28, 58, number_to_compare))
+    image_size = 28
+    sep_size = 2
+    plot_output = np.zeros((number_to_compare, image_size, 2 * image_size + sep_size))
     for i in range(number_to_compare):
-        plot_output[:, :, i] = np.hstack((random_inputs[:, :, i], np.hstack((image_separation, network_outputs[:, :, i]))))
+        plot_output[i, :, 0:image_size] = random_inputs[i, :].reshape((image_size, image_size))
+        plot_output[i, :, image_size + sep_size:2 * image_size + sep_size] = network_outputs[i, :].reshape((image_size, image_size))
 
     # Compute subplot size
     column_number = int(np.sqrt(number_to_compare))
@@ -74,11 +73,11 @@ def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, t
     # Plot bloc images
     for i in range(column_number):
         for j in range(column_number):
-            initial_image = plot_output[:, :, j + column_number * i]
-            axs[i][j].imshow(initial_image, cmap='gray')
+            image = plot_output[j + column_number * i, :, :]
+            axs[i][j].imshow(image, cmap='gray')
     # Fill in last row
     for j in range(-delta):
-        initial_image = plot_output[:, :, j + column_number * (line_number - 1)]
-        axs[line_number - 1][j].imshow(initial_image, cmap='gray')
+        image = plot_output[j + column_number * (line_number - 1), :, :]
+        axs[line_number - 1][j].imshow(image, cmap='gray')
 
     plt.show()

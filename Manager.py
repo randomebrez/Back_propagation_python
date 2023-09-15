@@ -3,10 +3,13 @@ import numpy as np
 import Tools.OpenmlGateway as openml_gateway
 
 
-def get_dataset(dataset_id, feature_class, normalization_constant, batch_size=100):
+def get_dataset(dataset_id, feature_class, class_number, normalization_constant, batch_size=100):
     # Call to openML server
-    ds_inputs, ds_targets = openml_gateway.get_data_set_normalized(dataset_id, feature_class, normalization_constant, batch_size=batch_size)
-    return ds_inputs, ds_targets
+    ds_inputs, ds_targets = openml_gateway.get_column_data_set_normalized(dataset_id, feature_class, class_number, normalization_constant, batch_size=batch_size)
+
+    input_size = ds_inputs[1].shape[2]
+    output_size = ds_targets[1].shape[2]
+    return ds_inputs, ds_targets, input_size, output_size
 
 
 def train_network(ds_inputs, ds_targets, network, train_model):

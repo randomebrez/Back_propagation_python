@@ -10,10 +10,11 @@ import Class.Model as model
 def test_dense_1_hidden(hidden_activation, normalization_function=''):
     # Get dataset from openML
     dataset_id = 40996
-    feature_name = 'class',
+    feature_name = 'class'
+    class_number = 10
     normalization_constant = 255
     batch_size = 100
-    ds_inputs, ds_targets = manager.get_dataset(dataset_id, feature_name, normalization_constant, batch_size=batch_size)
+    ds_inputs, ds_targets = manager.get_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
 
     input_size = np.shape(ds_inputs[0][0])[0]
     output_size = np.shape(ds_targets[0][0])[0]
@@ -50,26 +51,25 @@ def test_dense_1_hidden(hidden_activation, normalization_function=''):
 
 
 def test_auto_encoder(hidden_activation, normalization_function=''):
-    # Get dataset from openML
     dataset_id = 40996
-    feature_name = 'class',
+    feature_name = 'class'
+    class_number = 10
     normalization_constant = 255
     batch_size = 100
-    ds_inputs, ds_targets = manager.get_dataset(dataset_id, feature_name, normalization_constant, batch_size=batch_size)
+    # Get dataset from openML
+    ds_inputs, ds_targets, input_size, output_size = manager.get_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
 
-    input_size = np.shape(ds_inputs[0][0])[0]
-    output_size = np.shape(ds_inputs[0][0])[0]
     # Choose hidden layer sizes
     hidden_layer_sizes = [700, 100, 700]
 
     # Build network
-    network_builder = builder.NetworkBuilder(input_size, output_size)
+    network_builder = builder.NetworkBuilder(input_size, input_size)
     for layer_size in hidden_layer_sizes:
         # network_builder.add_dense_layer(layer_size, 'tan_h')
         network_builder.add_dense_layer(layer_size, hidden_activation, normalization_function=normalization_function)
 
     # Output layer bloc (dense + OneToOne softmax)
-    network_builder.add_dense_layer(output_size, 'sigmoid', is_output_layer=True, use_bias=False,
+    network_builder.add_dense_layer(input_size, 'sigmoid', is_output_layer=True, use_bias=False,
                                     normalization_function='')
 
     network = network_builder.build()
