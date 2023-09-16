@@ -11,7 +11,7 @@ class DenseLayer(LayerBase.__LayerBase):
         self.activation_function_with_derivative = activation_function_with_derivative
         self.normalization = normalization_function
         super().__init__('dense', is_output_layer)
-        self.output_shape = (1, layer_size, 1)
+        self.output_shape = (1, layer_size)
 
     def initialize(self, input_shape):
         input_number = np.product(np.asarray(input_shape))

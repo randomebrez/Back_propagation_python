@@ -9,9 +9,9 @@ from Class.Layers import Flatten as f_layer
 
 
 class NetworkBuilder:
-    def __init__(self, input_size, output_size):
-        self.wip_network = net.Network(input_size, output_size)
-        self.wip_network.layers.append(i_layer.InputLayer(input_size))
+    def __init__(self, input_shape, output_shape):
+        self.wip_network = net.Network(input_shape, output_shape)
+        self.wip_network.layers.append(i_layer.InputLayer(input_shape))
         self.activation_functions = {
             'relu': [computer.relu, computer.relu_with_derivative],
             'sigmoid': [computer.sigmoid, computer.sigmoid_with_derivative],
@@ -23,9 +23,9 @@ class NetworkBuilder:
             '': None
         }
 
-    def create_new(self, input_size, output_size):
-        self.wip_network = net.Network(input_size, output_size)
-        self.wip_network.layers.append(i_layer.InputLayer(input_size))
+    def create_new(self, input_shape, output_shape):
+        self.wip_network = net.Network(input_shape, output_shape)
+        self.wip_network.layers.append(i_layer.InputLayer(input_shape))
 
     def build(self):
         previous_layer = self.wip_network.layers[0]

@@ -2,9 +2,9 @@ import numpy as np
 
 
 class Network:
-    def __init__(self, input_size, output_size):
-        self.input_size = input_size
-        self.output_size = output_size
+    def __init__(self, input_shape, output_shape):
+        self.input_shape = input_shape
+        self.output_size = output_shape
         self.output_layer_index = 0
         self.layers = []
 

@@ -38,18 +38,18 @@ def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, t
     axs[1].set_ylim(bottom=0)
 
     # Compare images
-    input_size = network.input_size
-    random_inputs = np.zeros((number_to_compare, input_size))
+    random_inputs = []
 
     # Select random image in a random batch
     for i in range(number_to_compare):
         random_batch = np.random.randint(0, training_inputs.shape[0])
         random_input_index = np.random.randint(0, training_inputs.shape[1])
         # Get images to compare
-        random_inputs[i, :] = training_inputs[random_batch, random_input_index, :]
+        random_inputs.append(training_inputs[random_batch, random_input_index])
 
+    array_inp = np.array(random_inputs)
     # Compute result
-    network.feed_forward(random_inputs, False)
+    network.feed_forward(array_inp, False)
     network_outputs = network.get_outputs()
 
     # Create image bloc (original|sep|output)
@@ -57,7 +57,7 @@ def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, t
     sep_size = 2
     plot_output = np.zeros((number_to_compare, image_size, 2 * image_size + sep_size))
     for i in range(number_to_compare):
-        plot_output[i, :, 0:image_size] = random_inputs[i, :].reshape((image_size, image_size))
+        plot_output[i, :, 0:image_size] = array_inp[i, :].reshape((image_size, image_size))
         plot_output[i, :, image_size + sep_size:2 * image_size + sep_size] = network_outputs[i, :].reshape((image_size, image_size))
 
     # Compute subplot size
