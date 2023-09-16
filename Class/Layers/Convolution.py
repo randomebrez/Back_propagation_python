@@ -38,7 +38,7 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         self.init_cache()
 
     def compute(self, inputs, store):
-        batch_size, shaped_inputs = self.shape_input_batch(inputs)
+        batch_size, shaped_inputs = self.shape_input_batch(inputs)  # (3, 3295, 28)
         batch_feature_maps = self.convolve_filters(shaped_inputs, batch_size)
 
         # If backpropagation is needed, store d_activation values
@@ -61,49 +61,49 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         shaped_input = np.zeros((depth, batch_size * index_shift - kernel_size, y_size))
 
         for i in range(batch_size):
-            index_start = i * index_shift
-            shaped_input[:, index_start:index_start + index_shift, :] = input_batch[i, :, :, :]
+            index_start = i * index_shift  # 0, 33, 61
+            shaped_input[:, index_start:index_start + x_size, :] = input_batch[i]  # 0-->28 |
 
         return batch_size, shaped_input
 
     def convolve_filters(self, shaped_input_batch, batch_size):
         stride = self.parameters['stride']
         kernel_size = self.parameters['kernel_size']
-        (padding_x, padding_y) = self.parameters['zero_padding']
+        (padding_x, padding_y) = self.parameters['zero_padding']  # (1, 1)
         (depth, input_shape_x, input_shape_y) = self.parameters['input_shape']
-        (conv_res_shape_x, conv_res_shape_y) = (kernel_size + input_shape_x - 1, kernel_size + input_shape_y - 1)
+        (conv_res_shape_x, conv_res_shape_y) = (kernel_size + input_shape_x - 1, kernel_size + input_shape_y - 1)  # (32, 32)
 
         # Convolve
-        conv_res = fftconvolve(self.filters, shaped_input_batch)
+        conv_res = fftconvolve(self.filters, shaped_input_batch)  # (3, 3299, 32)
 
         # Select only the depth slices with full overlap (for each filter)
-        full_overlap_conv_res = conv_res[depth-1::depth, :, :]
+        full_overlap_conv_res = conv_res[depth-1::depth, :, :]  # (3, 3299, 32)
 
         # Apply bias
         if self.parameters['use_bias']:
             full_overlap_conv_res += self.biases
 
         # Indices for truncating single images according to padding
-        x_min = kernel_size - (padding_x - 1)
-        x_max = conv_res_shape_x - x_min
-        y_min = kernel_size - (padding_y - 1)
-        y_max = conv_res_shape_y - y_min
+        x_min = (kernel_size - 1) - padding_x  # 3
+        x_max = input_shape_x + padding_x        # 29
+        y_min = (kernel_size - 1) - padding_y
+        y_max = input_shape_y + padding_y
 
         results = np.empty((batch_size, self.output_shape[0], self.output_shape[1], self.output_shape[2]))
         index_min = 0
         for i in range(batch_size):
             # Split conv_res into individual convolution result (filters * single_image)
-            single_image_conv_res = full_overlap_conv_res[:, index_min:index_min + conv_res_shape_x, :]
-            index_min = index_min + conv_res_shape_x + 1
+            single_image_conv_res = full_overlap_conv_res[:, index_min:index_min + conv_res_shape_x, :]  # (3, 32, 32) |
+            index_min += conv_res_shape_x + 1
 
             # Truncate single image according to padding
-            truncated_conv_res = single_image_conv_res[:, x_min:x_max, y_min:y_max]
+            truncated_conv_res = single_image_conv_res[:, x_min:x_max, y_min:y_max]  # (27, 27) | (26, 26)
 
             # Slice single image according to stride
-            sliced_conv_res = truncated_conv_res[:, ::stride, ::stride]
+            sliced_conv_res = truncated_conv_res[:, ::stride, ::stride]  # (13, 13)
 
             # Apply bias and save
-            results[i, :, :, :] = sliced_conv_res
+            results[i] = sliced_conv_res
 
         return results
 
@@ -115,19 +115,19 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         input_shape_x = input_shape[1]
         input_shape_y = input_shape[2]
 
-        x_jump = int((input_shape_x - kernel_size) / stride) + 1
+        x_jump = (input_shape_x - kernel_size + 1) // stride
         x_padding_needed = kernel_size + stride * x_jump - input_shape_x
-        x_padding_each_side = int((x_padding_needed + 1) / 2)
+        x_padding_each_side = (x_padding_needed + 1) // 2
 
         if input_shape_x != input_shape_y:
-            y_jump = int((input_shape_y - kernel_size) / stride) + 1
+            y_jump = (input_shape_y - kernel_size + 1) // stride
             y_padding_needed = kernel_size + stride * y_jump - input_shape_y
-            y_padding_each_side = int((y_padding_needed + 1) / 2)
+            y_padding_each_side = (y_padding_needed + 1) // 2
 
             output_shape = (self.parameters['filter_number'], x_jump + 1, y_jump + 1)
 
             return (x_padding_each_side, y_padding_each_side), output_shape
         else:
-            output_shape = (self.parameters['filter_number'], x_jump + 1, x_jump + 1, self.parameters['filter_number'])
+            output_shape = (self.parameters['filter_number'], x_jump + 1, x_jump + 1)
 
             return (x_padding_each_side, x_padding_each_side), output_shape

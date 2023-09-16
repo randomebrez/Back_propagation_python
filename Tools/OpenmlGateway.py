@@ -43,7 +43,7 @@ def get_image_data_set_normalized(dataset_id, feature_class, class_number, norma
     depth = 1
 
     input_batches = np.empty((batch_number, batch_size, depth, image_size, image_size))
-    target_batches = np.empty((batch_number, batch_size, 1, class_number, 1))
+    target_batches = np.empty((batch_number, batch_size, class_number))
 
     batch_index = 0
     while batch_index < batch_number:
@@ -51,11 +51,10 @@ def get_image_data_set_normalized(dataset_id, feature_class, class_number, norma
         max_index = min(min_index + batch_size, ds_size)
 
         input_batch = datas.iloc[min_index:max_index] / normalization_constant
-        input_batches[batch_index, :, :, :, :] = input_batch.to_numpy().reshape((batch_size, depth, image_size, image_size))
+        input_batches[batch_index] = input_batch.to_numpy().reshape((batch_size, depth, image_size, image_size))
 
         target_vectors = rework_targets(data_targets.iloc[min_index:max_index], class_number)
-        target_batches[batch_index, :, 0, :, 0] = target_vectors
-        #target_batches[batch_index, :, 0, :, 0] = np.transpose(target_vectors.reshape((batch_size, 1, class_number, 1)))
+        target_batches[batch_index] = target_vectors
 
         batch_index += 1
 

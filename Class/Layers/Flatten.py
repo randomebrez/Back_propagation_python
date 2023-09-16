@@ -25,7 +25,7 @@ class FlatLayer(LayerBase.__LayerBase):
     def compute(self, inputs, store):
         batch_size = inputs.shape[0]
         input_neuron_number = self.output_shape[1]
-        return np.transpose(inputs.reshape((batch_size, input_neuron_number)))  # seems weird but reshape starts filling rows. Let rows be a single image from the batch, then transpose to get them column wise
+        return inputs.reshape((batch_size, input_neuron_number))
 
     # backward inputs : rows = neuron activation - column = batch index
     def compute_backward(self, inputs):

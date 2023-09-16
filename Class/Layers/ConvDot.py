@@ -49,7 +49,7 @@ class ConvolutionDotLayer(LayerBase.__LayerBase):
             activations = self.activation_function(aggregation_result)
 
         # Reshape to output a 4D vector (batch_size, depth, row, col)
-        output_shaped_activations = self.im_to_col(activations)
+        output_shaped_activations = self.col_to_im(activations)
 
         # Store activations if asked, or for output layer
         if store or self.is_output_layer:
@@ -65,14 +65,14 @@ class ConvolutionDotLayer(LayerBase.__LayerBase):
         input_shape_x = input_shape[1]
         input_shape_y = input_shape[2]
 
-        x_jump = int((input_shape_x - kernel_size) / stride) + 1
+        x_jump = (input_shape_x - kernel_size + 1) // stride
         x_padding_needed = kernel_size + stride * x_jump - input_shape_x
-        x_padding_each_side = int((x_padding_needed + 1) / 2)
+        x_padding_each_side = (x_padding_needed + 1) // 2
 
         if input_shape_x != input_shape_y:
-            y_jump = int((input_shape_y - kernel_size) / stride) + 1
+            y_jump = (input_shape_y - kernel_size + 1) // stride
             y_padding_needed = kernel_size + stride * y_jump - input_shape_y
-            y_padding_each_side = int((y_padding_needed + 1) / 2)
+            y_padding_each_side = (y_padding_needed + 1) // 2
 
             output_shape = (self.parameters['filter_number'], x_jump + 1, y_jump + 1)
 
@@ -106,9 +106,9 @@ class ConvolutionDotLayer(LayerBase.__LayerBase):
                 y_min_index = y * stride
                 sub_images = batch_padded[:, :, x_min_index:x_min_index + kernel_size, y_min_index:y_min_index + kernel_size]
                 for batch_image_index in range(batch_size):
-                    sub_image_padded = sub_images[batch_image_index, :, :, :]
+                    sub_image_padded = sub_images[batch_image_index]
                     column_index = batch_image_index * image_col_number + y + nb_block_y * x
-                    result[:, column_index] = sub_image_padded.reshape((block_to_col_size, 1))
+                    result[:, column_index] = sub_image_padded.reshape(block_to_col_size)
         return result
 
     def col_to_im(self, image_batch):
@@ -121,12 +121,12 @@ class ConvolutionDotLayer(LayerBase.__LayerBase):
         nb_block_y = (input_shape_y + 2 * zero_padding_y - kernel_size) // stride + 1
 
         image_col_number = nb_block_x * nb_block_y
-        batch_size = image_batch.shape[1] / image_col_number
+        batch_size = image_batch.shape[1] // image_col_number
 
         result = np.empty((batch_size, self.output_shape[0], self.output_shape[1], self.output_shape[2]))
         for i in range(batch_size):
             y_min_index = i * image_col_number
             single_image = image_batch[:, y_min_index:y_min_index + image_col_number]
-            result[i, :, :, :] = single_image.reshape((self.output_shape[0], self.output_shape[1], self.output_shape[2]))
+            result[i] = single_image.reshape((self.output_shape[0], self.output_shape[1], self.output_shape[2]))
 
         return result
