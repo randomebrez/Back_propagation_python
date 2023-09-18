@@ -3,7 +3,7 @@ from Class.Layers import LayerBase
 
 
 # This Layer transforms 3D images to column
-# Input shape : (depth, row, col) => Output shape : (col, row, depth) column vector
+# Input shape : (depth, row, col) => Output shape : (1, depth * row * col)
 class FlatLayer(LayerBase.__LayerBase):
     def __init__(self, is_output_layer=False):
         self.parameters = {'input_shape': (0, 0, 0)}
