@@ -21,6 +21,8 @@ def plot_perceptron_result(pre_train_test_result, train_batch_costs, mean_batch_
     axs[2].set_title('Cost evolution during training')
     axs[2].set_ylim(bottom=0)
 
+    plt.show()
+
 
 def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, train_batch_costs, mean_batch_costs, post_train_test_result, number_to_compare=10):
     x_test = np.arange(1, len(pre_train_test_result['cost_function']) + 1)

@@ -4,7 +4,7 @@ epsilon = 0.001
 
 # Error calculations
 def mean_square_error(outputs, targets):
-    sample_number = np.shape(outputs)[1]
+    sample_number = np.shape(outputs)[0]
     return np.sum((outputs - targets) ** 2) / sample_number
 
 
@@ -13,7 +13,7 @@ def distance_get(outputs, targets):
 
 
 def cross_entropy(outputs, targets):
-    sample_number = np.shape(outputs)[1]
+    sample_number = np.shape(outputs)[0]
     return -(1/sample_number) * np.sum(targets * np.log((outputs + epsilon)/1.1))
 
 
@@ -52,12 +52,11 @@ def relu_with_derivative(x):
 # probably don't work in higher dimension than 2.
 def softmax(x):
     exp_vector = np.exp(x)
-    sum_exp = np.sum(exp_vector, axis=0, keepdims=True)
+    sum_exp = np.sum(exp_vector, axis=1, keepdims=True)
     return exp_vector / sum_exp
 
 
 def norm_2(x):
-    norm = np.sqrt(np.sum(x ** 2))
-    if norm == 0:
-        return x
+    norm = np.sqrt(np.sum(x ** 2, axis=1)).reshape((x.shape[0], 1))
+    norm += epsilon
     return x / norm
