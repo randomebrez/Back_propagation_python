@@ -14,7 +14,7 @@ def input_compute_shape(input_batch, kernel_size_x):
     return shaped_input
 
 
-def input_conv_res_shape(convolution_result, batch_size, kernel_size, stride, padding, input_shape, output_shape):
+def input_conv_res_shape(batch_size, convolution_result, kernel_size, stride, padding, input_shape, output_shape):
     padding_depth, padding_x, padding_y = padding[0], padding[1], padding[2]
     kernel_size_x, kernel_size_y = kernel_size[1], kernel_size[2]
     stride_x, stride_y = stride[1], stride[2]
@@ -38,8 +38,7 @@ def input_conv_res_shape(convolution_result, batch_size, kernel_size, stride, pa
             single_image = single_image[:, :-1]
 
         # Truncate image according to padding
-        single_image = single_image[:, x_to_remove_each_side:-x_to_remove_each_side,
-                       y_to_remove_each_side::-y_to_remove_each_side]
+        single_image = single_image[:, x_to_remove_each_side:-x_to_remove_each_side, y_to_remove_each_side::-y_to_remove_each_side]
 
         # Slice single image according to stride
         sliced_conv_res = single_image[:, ::stride_x, ::stride_y]
@@ -49,75 +48,11 @@ def input_conv_res_shape(convolution_result, batch_size, kernel_size, stride, pa
     return results
 
 
-def dw_compute_shape(previous_layer_activation, back_prop_activated_values, kernel_size, stride, padding, filter_number, input_shape):
-    input_depth, input_x, input_y = input_shape[0], input_shape[1], input_shape[2]
-    padding_depth, padding_x, padding_y = padding[0], padding[1], padding[2]
-    kernel_size_x, kernel_size_y = kernel_size[1], kernel_size[2]
-    stride_x, stride_y = stride[1], stride[2]
-    batch_size, bp_x, bp_y = back_prop_activated_values.shape[0], back_prop_activated_values.shape[2], back_prop_activated_values.shape[3]
-
-    bp_shape_depth = (filter_number - 1) * (input_depth - 1) + filter_number
-    # size of 1 bloc : InterestingValues | (kernel_size - 1) 0
-    bp_x_shift = bp_x + (stride_x - 1) * (bp_x - 1) + kernel_size_x - 1
-    bp_shape_x = bp_x_shift * batch_size - (kernel_size_x - 1)
-    bp_shape_y = (bp_y + (stride_y - 1) * (bp_y - 1))
-    shaped_bp_values = np.zeros((bp_shape_depth, bp_shape_x, bp_shape_y))
-
-    input_x_shift = input_x + 2 * padding_x
-    input_shape_x = input_x_shift * batch_size - 2 * padding_x
-    shaped_input = np.zeros((input_depth, input_shape_x, input_y))
-
-    for i in range(batch_size):
-        bp_index_start = i * bp_x_shift
-        bp_index_max = bp_index_start + bp_x_shift - (kernel_size_x - 1)
-        shaped_bp_values[::input_depth, bp_index_start:bp_index_max:stride_x, ::stride_y] = back_prop_activated_values[i]
-
-        input_index_start = i * input_x_shift
-        input_index_max = input_index_start + input_x_shift - 2 * padding_x
-        shaped_input[:, input_index_start:input_index_max] = previous_layer_activation[i]
-
-    return shaped_input, shaped_bp_values
-
-
-def dw_conv_res_shape(convolution_result, back_prop_activated_values, kernel_size, stride, padding, filter_number,
-                      input_shape):
-    input_depth, input_x, input_y = input_shape[0], input_shape[1], input_shape[2]
-    kernel_size_x, kernel_size_y = kernel_size[1], kernel_size[2]
-    stride_x, stride_y = stride[1], stride[2]
-    padding_depth, padding_x, padding_y = padding[0], padding[1], padding[2]
-    batch_size, bp_x, bp_y = back_prop_activated_values.shape[0], back_prop_activated_values.shape[2], \
-                             back_prop_activated_values.shape[3]
-
-    # Split depth wise
-    depth_split = np.array_split(convolution_result, filter_number, axis=0)
-
-    # Indices for truncating single images according to padding
-    x_to_remove_each_side = batch_size * (bp_x + (stride_x - 1) * (bp_x - 1) + kernel_size_x - 1) - (
-                kernel_size_x - 1) - padding_x - 1
-    y_to_remove_each_side = (bp_y + (stride_y - 1) * (bp_y - 1) - 1) - padding_y
-
-    filter_results = np.zeros((input_depth * filter_number, kernel_size_x, kernel_size_y))
-    for i in range(filter_number):
-        filter_result = depth_split[i]
-
-        # Remove useless values row/col wise
-        temp = filter_result[:, x_to_remove_each_side:-x_to_remove_each_side,
-               y_to_remove_each_side:-y_to_remove_each_side]
-
-        # Mean on each input of the batch
-        filter_results[i * input_depth:(i + 1) * input_depth] = temp / batch_size
-
-    return filter_results
-
-
-def de_compute_shape(filters, back_prop_activated_values, filter_number, kernel_size, stride, input_shape):
+def bp_shape(batch_size, back_prop_activated_values, kernel_size, stride, filter_number, input_shape):
     stride_x, stride_y = stride[1], stride[2]
     input_depth, input_x, input_y = input_shape[0], input_shape[1], input_shape[2]
     kernel_size_x, kernel_size_y = kernel_size[1], kernel_size[2]
-    batch_size, bp_x, bp_y = back_prop_activated_values.shape[0], back_prop_activated_values.shape[2], back_prop_activated_values.shape[3]
-
-    # Mirror filter block
-    filter_mirror = np.flip(np.flip(np.flip(filters, 0), 1), 2)
+    bp_x, bp_y = back_prop_activated_values.shape[2], back_prop_activated_values.shape[3]
 
     # size of 1 bloc : InterestingValues | kernel_size 0
     x_shift = bp_x + (bp_x - 1) * (stride_x - 1) + kernel_size_x - 1
@@ -130,12 +65,55 @@ def de_compute_shape(filters, back_prop_activated_values, filter_number, kernel_
     for i in range(batch_size):
         index_start = i * x_shift
         index_max = index_start + x_shift - (kernel_size_x - 1)
-        shaped_bp_values[::input_depth, index_start:index_max:stride_x, ::stride_y] = np.flip(back_prop_activated_values[i], 0)
+        shaped_bp_values[::input_depth, index_start:index_max:stride_x, ::stride_y] = back_prop_activated_values[i]
 
-    return filter_mirror, shaped_bp_values
+    return shaped_bp_values
 
 
-def de_conv_res_shape(convolution_result, batch_size, kernel_size, filter_number, padding, input_shape):
+def dw_compute_shape(batch_size, previous_layer_activation, padding, input_shape):
+    input_depth, input_x, input_y = input_shape[0], input_shape[1], input_shape[2]
+    padding_depth, padding_x, padding_y = padding[0], padding[1], padding[2]
+
+    previous_act_x_shift = input_x + 2 * padding_x
+    previous_act_shape_x = previous_act_x_shift * batch_size - 2 * padding_x
+    shaped_previous_act = np.zeros((input_depth, previous_act_shape_x, input_y))
+
+    for i in range(batch_size):
+        input_index_start = i * previous_act_x_shift
+        input_index_max = input_index_start + previous_act_x_shift - 2 * padding_x
+        shaped_previous_act[:, input_index_start:input_index_max] = previous_layer_activation[i]
+
+    return shaped_previous_act
+
+
+def dw_conv_res_shape(batch_size, convolution_result, kernel_size, stride, padding, filter_number, input_shape, output_shape):
+    input_depth, input_x, input_y = input_shape[0], input_shape[1], input_shape[2]
+    kernel_size_x, kernel_size_y = kernel_size[1], kernel_size[2]
+    stride_x, stride_y = stride[1], stride[2]
+    bp_x, bp_y = output_shape[1], output_shape[2]
+    padding_depth, padding_x, padding_y = padding[0], padding[1], padding[2]
+
+    # Split depth wise
+    depth_split = np.array_split(convolution_result, filter_number, axis=0)
+
+    # Indices for truncating single images according to padding
+    x_to_remove_each_side = batch_size * (bp_x + (stride_x - 1) * (bp_x - 1) + kernel_size_x - 1) - (kernel_size_x - 1) - padding_x - 1
+    y_to_remove_each_side = (bp_y + (stride_y - 1) * (bp_y - 1) - 1) - padding_y
+
+    filter_results = np.zeros((input_depth * filter_number, kernel_size_x, kernel_size_y))
+    for i in range(filter_number):
+        filter_result = depth_split[i]
+
+        # Remove useless values row/col wise
+        temp = filter_result[:, x_to_remove_each_side:-x_to_remove_each_side, y_to_remove_each_side:-y_to_remove_each_side]
+
+        # Mean on each input of the batch
+        filter_results[i * input_depth:(i + 1) * input_depth] = temp / batch_size
+
+    return filter_results
+
+
+def de_conv_res_shape(batch_size, convolution_result, kernel_size, filter_number, padding, input_shape):
     input_depth, input_x, input_y = input_shape[0], input_shape[1], input_shape[2]
     padding_depth, padding_x, padding_y = padding[0], padding[1], padding[2]
     kernel_size_x, kernel_size_y = kernel_size[1], kernel_size[2]

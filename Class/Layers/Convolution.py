@@ -81,7 +81,7 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         batch_feature_maps = helper.convolve_filters(shaped_inputs, self.filters)
 
         # Shape convolution result according to stride & padding
-        shaped_feature_maps = helper.input_conv_res_shape(batch_feature_maps, batch_size, kernel_size, stride, zero_padding, input_shape, self.output_shape)
+        shaped_feature_maps = helper.input_conv_res_shape(batch_size, batch_feature_maps, kernel_size, stride, zero_padding, input_shape, self.output_shape)
 
         # If backpropagation is needed, store d_activation values
         if store:
@@ -108,24 +108,26 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         zero_padding = self.parameters['zero_padding']
         stride = self.parameters['stride']
 
+        batch_size = inputs.shape[0]
+
         # compute back_activation values
         back_activation_values = self.cache['sigma_primes'] * inputs
 
         if self.normalization is not None:
             back_activation_values = self.normalization(back_activation_values)
 
-        # Save to update weights
-        self.cache['back_activation_values'] = back_activation_values
+        # Shape with stride BP values to use in derivative computations
+        shaped_back_activation_values = helper.bp_shape(batch_size, back_activation_values, kernel_size, stride, filter_number, input_shape)
+        self.cache['back_activation_values'] = shaped_back_activation_values
 
         # Shape filters and BP activated values for FFT convolution
-        filter_mirror, shaped_bp_values = helper.de_compute_shape(self.filters, back_activation_values, filter_number, kernel_size, stride, input_shape)
+        filters_mirror = np.flip(np.flip(np.flip(self.filters, 0), 1), 2)
 
         # FFT conv
-        conv_res = helper.convolve_filters(filter_mirror, shaped_bp_values)
+        conv_res = helper.convolve_filters(filters_mirror, shaped_back_activation_values)
 
         # Shape conv result
-        batch_size = inputs.shape[0]
-        shaped_result = helper.de_conv_res_shape(conv_res, batch_size, kernel_size, filter_number, zero_padding, input_shape)
+        shaped_result = helper.de_conv_res_shape(batch_size, conv_res, kernel_size, filter_number, zero_padding, input_shape)
 
         return shaped_result
 
@@ -135,16 +137,18 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         kernel_size = self.parameters['kernel_size']
         zero_padding = self.parameters['zero_padding']
         stride = self.parameters['stride']
-        back_activation_values = self.cache['back_activation_values']
+        shaped_bp_values = self.cache['back_activation_values']
 
-        # Shape filters and BP activated values for FFT convolution
-        shaped_input, shaped_bp_values = helper.dw_compute_shape(previous_layer_activation, back_activation_values, kernel_size, stride, zero_padding, filter_number, input_shape)
+        batch_size = previous_layer_activation.shape[0]
+
+        # Shape filters for FFT convolution
+        shaped_previous_act = helper.dw_compute_shape(batch_size, previous_layer_activation, zero_padding, input_shape)
 
         # FFT conv
-        conv_res = helper.convolve_filters(shaped_bp_values, shaped_input)
+        conv_res = helper.convolve_filters(shaped_bp_values, shaped_previous_act)
 
         # Shape conv result
-        shaped_result = helper.dw_conv_res_shape(conv_res, back_activation_values, kernel_size, stride, zero_padding, filter_number, input_shape)
+        shaped_result = helper.dw_conv_res_shape(batch_size, conv_res, kernel_size, stride, zero_padding, filter_number, input_shape, self.output_shape)
 
         self.filters -= learning_rate * shaped_result
 
