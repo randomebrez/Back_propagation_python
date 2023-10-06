@@ -22,7 +22,7 @@ def get_image_dataset(dataset_id, feature_class, class_number, normalization_con
 
 
 def train_network(ds_inputs, ds_targets, network, train_model):
-    start = time.time()
+    tick = time.time()
 
     # Split dataset
     training_inputs, training_targets = ds_inputs[0], ds_targets[0]
@@ -36,10 +36,10 @@ def train_network(ds_inputs, ds_targets, network, train_model):
         train_batch_cost_fct = np.concatenate((train_batch_cost_fct, cost_function))
         mean_cost_fct = np.mean(cost_function)
         train_batch_mean_cost_fct.append(mean_cost_fct)
-        print("Run {0} done. Mean error : {1}".format(i + 1, mean_cost_fct))
+        print("Run {0} done. Mean error - Execution time: {1} - {2}".format(i + 1, mean_cost_fct, round(time.time() - tick, 2)))
+        tick = time.time()
 
-    tick = time.time()
-    print('Execution time of \'train_network\' : {0}'.format(tick - start))
+    print('Execution time of \'train_network\' : {0}'.format(round(time.time() - tick, 2)))
 
     return {
         'batch_costs': train_batch_cost_fct,
@@ -48,7 +48,7 @@ def train_network(ds_inputs, ds_targets, network, train_model):
 
 
 def test_network(ds_inputs, ds_targets, network, train_model):
-    start = time.time()
+    tick = time.time()
 
     # Split dataset
     test_inputs, test_targets = ds_inputs[1], ds_targets[1]
@@ -56,7 +56,6 @@ def test_network(ds_inputs, ds_targets, network, train_model):
     # Run model
     test_result = network.test(test_inputs, test_targets, train_model)
 
-    tick = time.time()
-    print('Execution time of \'test_network\' : {0}'.format(tick - start))
+    print('Execution time of \'test_network\' : {0}'.format(round(time.time() - tick, 2)))
 
     return test_result

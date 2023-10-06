@@ -7,6 +7,7 @@ import Tools.ConvolutionHelper as helper
 class ConvolutionFFTLayer(LayerBase.__LayerBase):
     def __init__(self, filter_number, kernel_size, stride, activation_function, activation_function_with_derivative, is_output_layer=False, use_bias=True, normalization_function=None):
         self.filters = []
+        self.mirror_filters = []
         self.parameters = {'input_shape': (0, 0, 0), 'filter_number': filter_number, 'kernel_size': [0, kernel_size, kernel_size], 'stride': [0, stride, stride], 'zero_padding': [0, 0, 0], 'use_bias': use_bias}
         self.biases = []
         self.activation_function = activation_function
@@ -27,7 +28,7 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         filter_number = self.parameters['filter_number']
 
         self.filters = 0.01 * np.random.rand(input_depth * filter_number, kernel_size[1], kernel_size[2])
-
+        self.mirror_filters = np.flip(np.flip(np.flip(self.filters, 0), 1), 2)
         if self.parameters['use_bias']:
             self.biases = np.random.rand(self.parameters['filter_number'], 1, 1)
 
@@ -120,11 +121,8 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         shaped_back_activation_values = helper.bp_shape(batch_size, back_activation_values, kernel_size, stride, filter_number, input_shape)
         self.cache['back_activation_values'] = shaped_back_activation_values
 
-        # Shape filters and BP activated values for FFT convolution
-        filters_mirror = np.flip(np.flip(np.flip(self.filters, 0), 1), 2)
-
         # FFT conv
-        conv_res = helper.convolve_filters(filters_mirror, shaped_back_activation_values)
+        conv_res = helper.convolve_filters(self.mirror_filters, shaped_back_activation_values)
 
         # Shape conv result
         shaped_result = helper.de_conv_res_shape(batch_size, conv_res, kernel_size, filter_number, zero_padding, input_shape)
@@ -151,4 +149,5 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         shaped_result = helper.dw_conv_res_shape(batch_size, conv_res, kernel_size, stride, zero_padding, filter_number, input_shape, self.output_shape)
 
         self.filters -= learning_rate * shaped_result
+        self.mirror_filters = np.flip(np.flip(np.flip(self.filters, 0), 1), 2)
 
