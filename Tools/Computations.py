@@ -57,6 +57,6 @@ def softmax(x):
 
 
 def norm_2(x):
-    norm = np.sqrt(np.sum(x ** 2, axis=1)).reshape((x.shape[0], 1))
+    norm = np.sqrt(np.sum(x ** 2, axis=1, keepdims=True))
     norm += epsilon
     return x / norm

@@ -16,8 +16,8 @@ def plot_perceptron_result(pre_train_test_result, train_batch_costs, mean_batch_
     axs[1].plot(x_test, post_train_test_result['cost_function'], 'b-')
     axs[1].set_ylim(bottom=0)
     axs[1].set_title('Cost on test batches before & after training')
-    axs[2].plot(x_train, train_batch_costs, 'b')
-    axs[2].plot(x_train_mean, mean_batch_costs, '-r')
+    axs[2].plot(x_train, train_batch_costs, 'b-')
+    axs[2].plot(x_train_mean, mean_batch_costs, 'r-')
     axs[2].set_title('Cost evolution during training')
     axs[2].set_ylim(bottom=0)
 

@@ -59,7 +59,7 @@ class DenseLayer(LayerBase.__LayerBase):
 
     def update_weights(self, previous_layer_activation, learning_rate):
         current_layer_activations = self.cache['back_activation_values']
-        sample_number = np.shape(current_layer_activations)[1]
+        sample_number = np.shape(current_layer_activations)[0]
 
         # Update Bias
         if self.use_bias:

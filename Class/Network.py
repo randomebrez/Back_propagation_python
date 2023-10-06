@@ -85,8 +85,8 @@ class Network:
 
     def compute_accuracy(self, targets):
         outputs = self.layers[self.output_layer_index].get_activation_values()
-        output_indices = np.argmax(outputs, axis=0)
-        labels = np.argmax(targets, axis=0)
+        output_indices = np.argmax(outputs, axis=1)
+        labels = np.argmax(targets, axis=1)
         return 100 * np.mean(output_indices == labels)
 
     def clean_layers_cache(self):
