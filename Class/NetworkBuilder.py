@@ -6,6 +6,7 @@ from Class.Layers import OneToOne as oto_layer
 from Class.Layers import ConvDot as cd_layer
 from Class.Layers import Convolution as c_layer
 from Class.Layers import Flatten as f_layer
+from Class.Layers import Normalization as n_layer
 
 
 class NetworkBuilder:
@@ -15,11 +16,9 @@ class NetworkBuilder:
         self.activation_functions = {
             'relu': [computer.relu, computer.relu_with_derivative],
             'sigmoid': [computer.sigmoid, computer.sigmoid_with_derivative],
-            'tan_h': [computer.tan_h, computer.tan_h_with_derivative]
-        }
-        self.operations = {
-            'softmax': computer.softmax,
-            'norm_2': computer.norm_2,
+            'tan_h': [computer.tan_h, computer.tan_h_with_derivative],
+            'softmax': [computer.softmax, computer.softmax_derivative],
+            'norm_2': [computer.norm_2, computer.norm_2_derivative],
             '': None
         }
 
@@ -37,23 +36,28 @@ class NetworkBuilder:
 
         return self.wip_network
 
-    def add_dense_layer(self, layer_size: int, activation_function: str, is_output_layer=False, use_bias=True, normalization_function=''):
-        activations = self.activation_functions[activation_function]
-        layer = d_layer.DenseLayer(layer_size, activations[0], activations[1], is_output_layer, use_bias, self.operations[normalization_function])
+    def add_dense_layer(self, layer_size: int, is_output_layer=False, use_bias=True):
+        layer = d_layer.DenseLayer(layer_size, is_output_layer, use_bias)
         self.wip_network.layers.append(layer)
 
-    def add_one_to_one_layer(self, operation: str, is_output_layer=False):
-        layer = oto_layer.OneToOneLayer(self.operations[operation], is_output_layer)
+    def add_one_to_one_layer(self, activation_function: str, is_output_layer=False):
+        activation = self.activation_functions[activation_function]
+        layer = oto_layer.OneToOneLayer(activation[0], activation[1], is_output_layer)
+        self.wip_network.layers.append(layer)
+
+    def add_normalization_layer(self, activation_function: str, is_output_layer=False):
+        activation = self.activation_functions[activation_function]
+        layer = n_layer.NormalizationLayer(activation[0], is_output_layer)
         self.wip_network.layers.append(layer)
 
     def add_conv_dot_layer(self, filter_number: int, kernel_size: int, stride: int, activation_function: str, is_output_layer=False, use_bias=True, normalization_function=''):
         activations = self.activation_functions[activation_function]
-        layer = cd_layer.ConvolutionDotLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias, self.operations[normalization_function])
+        layer = cd_layer.ConvolutionDotLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias, self.activation_functions[normalization_function])
         self.wip_network.layers.append(layer)
 
-    def add_conv_fft_layer(self, filter_number: int, kernel_size: int, stride: int, activation_function: str, is_output_layer=False, use_bias=True, normalization_function=''):
+    def add_conv_fft_layer(self, filter_number: int, kernel_size: int, stride: int, activation_function: str, is_output_layer=False, use_bias=True):
         activations = self.activation_functions[activation_function]
-        layer = c_layer.ConvolutionFFTLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias, self.operations[normalization_function])
+        layer = c_layer.ConvolutionFFTLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias)
         self.wip_network.layers.append(layer)
 
     def add_flat_layer(self, is_output_layer=False):

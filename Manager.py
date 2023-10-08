@@ -36,7 +36,8 @@ def train_network(ds_inputs, ds_targets, network, train_model):
         train_batch_cost_fct = np.concatenate((train_batch_cost_fct, cost_function))
         mean_cost_fct = np.mean(cost_function)
         train_batch_mean_cost_fct.append(mean_cost_fct)
-        print("Run {0} done. Mean error - Execution time: {1} - {2}".format(i + 1, mean_cost_fct, round(time.time() - tick, 2)))
+        print("Run {0} done. Mean error : {1} -  Execution time : {2}".format(i + 1, round(float(mean_cost_fct), 5), round(time.time() - tick, 2)))
+        training_inputs, training_targets = shuffle_training_datas(training_inputs, training_targets)
         tick = time.time()
 
     print('Execution time of \'train_network\' : {0}'.format(round(time.time() - tick, 2)))
@@ -46,15 +47,18 @@ def train_network(ds_inputs, ds_targets, network, train_model):
         'mean_batch_costs': train_batch_mean_cost_fct
     }
 
+def shuffle_training_datas(training_inputs, training_targets):
+    permutations = np.random.permutation(training_inputs.shape[0])
+    return training_inputs[permutations], training_targets[permutations]
 
-def test_network(ds_inputs, ds_targets, network, train_model):
+def test_network(ds_inputs, ds_targets, network, train_model, with_details=True):
     tick = time.time()
 
     # Split dataset
     test_inputs, test_targets = ds_inputs[1], ds_targets[1]
 
     # Run model
-    test_result = network.test(test_inputs, test_targets, train_model)
+    test_result = network.test(test_inputs, test_targets, train_model, with_details)
 
     print('Execution time of \'test_network\' : {0}'.format(round(time.time() - tick, 2)))
 

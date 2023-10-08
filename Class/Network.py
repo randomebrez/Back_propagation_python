@@ -40,8 +40,8 @@ class Network:
         return batch_mean_cost_fct
 
     # Testing
-    def test(self, input_batches, target_batches, test_model):
-        result = {'accuracy': [], 'cost_function': []}
+    def test(self, input_batches, target_batches, test_model, with_details=True):
+        result = {'accuracy': [], 'cost_function': [], 'values': [], 'good_answers': []}
         for input_batch, target_batch in zip(input_batches, target_batches):
 
             # Feed forward
@@ -52,8 +52,11 @@ class Network:
             result['cost_function'].append(mean_cost_fct)
 
             # return percentage of good answer
-            accuracy = self.compute_accuracy(target_batch)
-            result['accuracy'].append(accuracy)
+            if with_details:
+                accuracy, mean_output_values, good_answer_mean = self.compute_accuracy(target_batch)
+                result['accuracy'].append(accuracy)
+                result['values'].append(mean_output_values)
+                result['good_answers'].append(good_answer_mean)
         return result
 
     # Feed forward
@@ -87,7 +90,11 @@ class Network:
         outputs = self.layers[self.output_layer_index].get_activation_values()
         output_indices = np.argmax(outputs, axis=1)
         labels = np.argmax(targets, axis=1)
-        return 100 * np.mean(output_indices == labels)
+        good_answer_indices = np.where(output_indices == labels)
+        ga = outputs[good_answer_indices]
+        gam = np.max(ga, axis=1)
+        good_answer_mean = np.mean(gam)
+        return 100 * np.mean(output_indices == labels), np.sum(outputs * targets) / targets.shape[0], good_answer_mean
 
     def clean_layers_cache(self):
         for layer in self.layers:
