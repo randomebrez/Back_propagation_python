@@ -18,7 +18,13 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
 
     def compute(self, inputs, store):
         row_wise_result = self.dimension_wise_compute(0, inputs, store)
-        return self.dimension_wise_compute(1, row_wise_result, store)
+        activations = self.dimension_wise_compute(1, row_wise_result, store)
+
+        # Store activations if asked, or for output layer
+        if store or self.is_output_layer:
+            self.cache['activation_values'] = activations
+
+        return activations
 
     # backward inputs : rows = neuron activation - column = batch index
     def compute_backward(self, inputs):

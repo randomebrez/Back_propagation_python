@@ -6,6 +6,7 @@ from Class.Layers import OneToOne as oto_layer
 from Class.Layers import ConvDot as cd_layer
 from Class.Layers import Convolution as c_layer
 from Class.Layers import Flatten as f_layer
+from Class.Layers import MinMaxPooling as p_layer
 from Class.Layers import Normalization as n_layer
 
 
@@ -62,4 +63,8 @@ class NetworkBuilder:
 
     def add_flat_layer(self, is_output_layer=False):
         layer = f_layer.FlatLayer(is_output_layer)
+        self.wip_network.layers.append(layer)
+
+    def add_pool_layer(self, kernel_size: int, mode: str, is_output_layer=False):
+        layer = p_layer.MinMaxPoolingLayer(kernel_size, mode, is_output_layer)
         self.wip_network.layers.append(layer)

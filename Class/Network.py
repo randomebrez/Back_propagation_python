@@ -93,7 +93,9 @@ class Network:
         good_answer_indices = np.where(output_indices == labels)
         ga = outputs[good_answer_indices]
         gam = np.max(ga, axis=1)
-        good_answer_mean = np.mean(gam)
+        good_answer_mean = 0
+        if len(gam) > 0:
+            good_answer_mean = np.mean(gam)
         return 100 * np.mean(output_indices == labels), np.sum(outputs * targets) / targets.shape[0], good_answer_mean
 
     def clean_layers_cache(self):
