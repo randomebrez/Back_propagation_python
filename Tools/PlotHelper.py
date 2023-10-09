@@ -12,15 +12,18 @@ def plot_perceptron_result(pre_train_test_result, train_batch_costs, mean_batch_
     axs[0, 0].plot(x_test, post_train_test_result['accuracy'], 'b-')
     axs[0, 0].set_ylim(bottom=0)
     axs[0, 0].set_title('Accuracy on test batches before & after training')
+
     axs[1, 0].plot(x_test, pre_train_test_result['values'], 'r-')
     axs[1, 0].plot(x_test, post_train_test_result['values'], 'b-')
     axs[1, 0].plot(x_test, post_train_test_result['good_answers'], 'g-')
     axs[1, 0].set_ylim(bottom=0)
     axs[1, 0].set_title('Output mean values on test batches before & after training')
+
     axs[0, 1].plot(x_test, pre_train_test_result['cost_function'], 'r-')
     axs[0, 1].plot(x_test, post_train_test_result['cost_function'], 'b-')
     axs[0, 1].set_ylim(bottom=0)
     axs[0, 1].set_title('Cost on test batches before & after training')
+
     axs[1, 1].plot(x_train, train_batch_costs, 'b-')
     axs[1, 1].plot(x_train_mean, mean_batch_costs, 'r-')
     axs[1, 1].set_title('Cost evolution during training')
@@ -39,8 +42,9 @@ def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, t
     axs[0].plot(x_test, post_train_test_result['cost_function'], 'b-')
     axs[0].set_ylim(bottom=0)
     axs[0].set_title('Cost on test batches before & after training')
-    axs[1].plot(x_train, train_batch_costs, 'b')
-    axs[1].plot(x_train_mean, mean_batch_costs, '-r')
+
+    axs[1].plot(x_train, train_batch_costs, 'b-')
+    axs[1].plot(x_train_mean, mean_batch_costs, 'g-')
     axs[1].set_title('Cost evolution during training')
     axs[1].set_ylim(bottom=0)
 
@@ -86,5 +90,24 @@ def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, t
     for j in range(-delta):
         image = plot_output[j + column_number * (line_number - 1), :, :]
         axs[line_number - 1][j].imshow(image, cmap='gray')
+
+    plt.show()
+
+def plot_ae_perceptron_combined(perceptron_test_result, ae_test_result, combined_test_result):
+    x_test = np.arange(1, len(ae_test_result['cost_function']) + 1)
+
+    fig, axs = plt.subplots(1, 2)
+
+    axs[0].plot(x_test, combined_test_result['accuracy'], 'b-')
+    axs[0].plot(x_test, perceptron_test_result['accuracy'], 'r-')
+    axs[0].set_ylim(bottom=0)
+    axs[0].set_title('Accuracy on test batches for combined and perceptron only')
+
+    axs[1].plot(x_test, combined_test_result['values'], 'b-')
+    axs[1].plot(x_test, combined_test_result['good_answers'], color='b', marker='x')
+    axs[1].plot(x_test, perceptron_test_result['values'], 'r-')
+    axs[1].plot(x_test, perceptron_test_result['good_answers'], color='r', marker='x')
+    axs[1].set_ylim(bottom=0)
+    axs[1].set_title('Network output mean values')
 
     plt.show()

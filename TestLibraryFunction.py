@@ -7,7 +7,6 @@ import Class.NetworkBuilder as builder
 import Class.Model as model
 
 
-# 'hidden_activation' can be 'sigmoid', 'relu', 'tan_h'
 def test_dense_1_hidden():
     # Get dataset from openML
     dataset_id = 40996
@@ -53,7 +52,6 @@ def test_dense_1_hidden():
     tick = time.time()
     print("FFT network execution time : {0}".format(tick - start))
     return network
-
 
 def test_auto_encoder():
     dataset_id = 40996
@@ -102,7 +100,7 @@ def test_auto_encoder():
     ph.plot_auto_encoder_results(network, ds_inputs[0], pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test, 36)
 
     tick = time.time()
-    print("FFT network execution time : {0}".format(tick - start))
+    print("Perceptron network execution time : {0}".format(tick - start))
     return network
 
 def test_conv_net():
@@ -145,5 +143,82 @@ def test_conv_net():
     ph.plot_perceptron_result(pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test)
 
     tick = time.time()
-    print("FFT network execution time : {0}".format(tick - start))
+    print("Auto-encoder network execution time : {0}".format(tick - start))
     return network
+
+def test_perceptron_ae_combined():
+    # Get dataset from openML
+    dataset_id = 40996
+    feature_name = 'class'
+    class_number = 10
+    normalization_constant = 255
+    batch_size = 100
+    ds_inputs, ds_targets, input_shape, output_shape = manager.get_column_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
+
+    network_builder = builder.NetworkBuilder(input_shape, output_shape)
+
+    # Perceptron
+    perceptron_train_model = model.ModelParameters(
+        computer.cross_entropy,
+        computer.cross_entropy_derivative,
+        initial_learning_rate=0.1,
+        final_learning_rate=0.01,
+        learning_rate_steps=5,
+        epochs=10)
+
+    perceptron_hidden_layer_sizes = [800]
+    for layer_size in perceptron_hidden_layer_sizes:
+        network_builder.add_dense_layer(layer_size)
+        network_builder.add_one_to_one_layer('relu')
+
+    network_builder.add_dense_layer(np.product(np.asarray(output_shape)))
+    network_builder.add_one_to_one_layer('softmax', is_output_layer=True)
+
+    perceptron = network_builder.build()
+
+    start = time.time()
+
+    manager.train_network(ds_inputs, ds_targets, perceptron, perceptron_train_model)
+    perceptron_test_result = manager.test_network(ds_inputs, ds_targets, perceptron, perceptron_train_model)
+
+    tick = time.time()
+    print("Perceptron network execution time : {0}".format(tick - start))
+
+    # Auto_encoding
+    ae_train_model = model.ModelParameters(
+        computer.mean_square_error,
+        computer.distance_get,
+        initial_learning_rate=0.1,
+        final_learning_rate=0.01,
+        learning_rate_steps=5,
+        epochs=10)
+    ae_hidden_layer_sizes = [700, 100, 700]
+    network_builder.create_new(input_shape, input_shape)
+    for layer_size in ae_hidden_layer_sizes:
+        network_builder.add_dense_layer(layer_size)
+        network_builder.add_one_to_one_layer('relu')
+
+    network_builder.add_dense_layer(np.product(np.asarray(input_shape)))
+    network_builder.add_one_to_one_layer('sigmoid', is_output_layer=True)
+
+    auto_encoding = network_builder.build()
+
+    tick = time.time()
+
+    manager.train_network(ds_inputs, ds_inputs, auto_encoding, ae_train_model)
+    ae_test_result = manager.test_network(ds_inputs, ds_inputs, auto_encoding, ae_train_model)
+    print("Auto_encoder network execution time : {0}".format(time.time() - tick))
+
+    test_inputs, test_targets = ds_inputs[1], ds_targets[1]
+    ae_outputs = np.zeros(test_inputs.shape)
+    for i in range(test_inputs.shape[0]):
+        # Compute using auto-encoding
+        auto_encoding.feed_forward(test_inputs[i], False)
+        ae_outputs[i] = auto_encoding.get_outputs()
+
+    tick = time.time()
+    # Compute perceptron with ae outputs
+    combined_test_result = perceptron.test(ae_outputs, test_targets, perceptron_train_model)
+    print("Combined network execution time : {0}".format(time.time() - tick))
+
+    ph.plot_ae_perceptron_combined(perceptron_test_result, ae_test_result, combined_test_result)
