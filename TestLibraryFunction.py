@@ -6,16 +6,18 @@ import Tools.Computations as computer
 import Class.NetworkBuilder as builder
 import Class.Model as model
 
-
-def test_dense_1_hidden():
-    # Get dataset from openML
+# Get dataset from openML
+def get_dataset():
     dataset_id = 40996
     feature_name = 'class'
     class_number = 10
     normalization_constant = 255
     batch_size = 100
-    ds_inputs, ds_targets, input_shape, output_shape = manager.get_column_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
 
+    return manager.get_column_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
+
+def test_perceptron():
+    ds_inputs, ds_targets, input_shape, output_shape = get_dataset()
     # Choose hidden layer sizes
     hidden_layer_sizes = [700]
 
@@ -54,13 +56,7 @@ def test_dense_1_hidden():
     return network
 
 def test_auto_encoder():
-    dataset_id = 40996
-    feature_name = 'class'
-    class_number = 10
-    normalization_constant = 255
-    batch_size = 100
-    # Get dataset from openML
-    ds_inputs, ds_targets, input_shape, output_shape = manager.get_column_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
+    ds_inputs, ds_targets, input_shape, output_shape = get_dataset()
 
     # Choose hidden layer sizes
     hidden_layer_sizes = [700, 100]
@@ -104,12 +100,7 @@ def test_auto_encoder():
     return network
 
 def test_conv_net():
-    dataset_id = 40996
-    feature_name = 'class'
-    class_number = 10
-    normalization_constant = 255
-    batch_size = 100
-    ds_inputs, ds_targets, input_shape, output_shape = manager.get_image_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
+    ds_inputs, ds_targets, input_shape, output_shape = get_dataset()
 
     network_builder = builder.NetworkBuilder(input_shape, output_shape)
 
@@ -147,17 +138,10 @@ def test_conv_net():
     return network
 
 def test_perceptron_ae_combined():
-    # Get dataset from openML
-    dataset_id = 40996
-    feature_name = 'class'
-    class_number = 10
-    normalization_constant = 255
-    batch_size = 100
-    ds_inputs, ds_targets, input_shape, output_shape = manager.get_column_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
-
-    network_builder = builder.NetworkBuilder(input_shape, output_shape)
+    ds_inputs, ds_targets, input_shape, output_shape = get_dataset()
 
     # Perceptron
+    network_builder = builder.NetworkBuilder(input_shape, output_shape)
     perceptron_train_model = model.ModelParameters(
         computer.cross_entropy,
         computer.cross_entropy_derivative,
