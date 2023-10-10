@@ -2,6 +2,7 @@ import numpy as np
 from tensorflow import keras
 from keras import layers
 import Tools.OpenmlGateway as openMl
+import Tools.PlotHelper as ph
 
 dataset_id = 40996
 input_shape = (28, 28)
@@ -63,7 +64,7 @@ def auto_encoder():
     )
 
     # Model training
-    epochs = 25
+    epochs = 20
     model.fit(
         ds_train,
         epochs=epochs,
@@ -71,5 +72,4 @@ def auto_encoder():
         validation_data=ds_test
     )
 
-    # Evaluate Model
-    model.evaluate(ds_test)
+    ph.plot_keras_auto_encoder_results(model, ds_test, 36)

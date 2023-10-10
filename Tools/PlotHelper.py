@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import tensorflow as tf
 import numpy as np
 
 
@@ -30,7 +31,6 @@ def plot_perceptron_result(pre_train_test_result, train_batch_costs, mean_batch_
     axs[1, 1].set_ylim(bottom=0)
 
     plt.show()
-
 
 def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, train_batch_costs, mean_batch_costs, post_train_test_result, number_to_compare=10):
     x_test = np.arange(1, len(pre_train_test_result['cost_function']) + 1)
@@ -68,8 +68,8 @@ def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, t
     sep_size = 2
     plot_output = np.zeros((number_to_compare, image_size, 2 * image_size + sep_size))
     for i in range(number_to_compare):
-        plot_output[i, :, 0:image_size] = array_inp[i, :].reshape((image_size, image_size))
-        plot_output[i, :, image_size + sep_size:2 * image_size + sep_size] = network_outputs[i, :].reshape((image_size, image_size))
+        plot_output[i, :, 0:image_size] = array_inp[i].reshape((image_size, image_size))
+        plot_output[i, :, image_size + sep_size:2 * image_size + sep_size] = network_outputs[i].reshape((image_size, image_size))
 
     # Compute subplot size
     column_number = int(np.sqrt(number_to_compare))
@@ -84,11 +84,11 @@ def plot_auto_encoder_results(network, training_inputs, pre_train_test_result, t
     # Plot bloc images
     for i in range(column_number):
         for j in range(column_number):
-            image = plot_output[j + column_number * i, :, :]
+            image = plot_output[j + column_number * i]
             axs[i][j].imshow(image, cmap='gray')
     # Fill in last row
     for j in range(-delta):
-        image = plot_output[j + column_number * (line_number - 1), :, :]
+        image = plot_output[j + column_number * (line_number - 1)]
         axs[line_number - 1][j].imshow(image, cmap='gray')
 
     plt.show()
@@ -109,5 +109,49 @@ def plot_ae_perceptron_combined(perceptron_test_result, ae_test_result, combined
     axs[1].plot(x_test, perceptron_test_result['good_answers'], color='r', marker='x')
     axs[1].set_ylim(bottom=0)
     axs[1].set_title('Network output mean values')
+
+    plt.show()
+
+def plot_keras_auto_encoder_results(model, training_inputs, number_to_compare=9):
+    # Select random image in a random batch
+    random_inputs = np.zeros((number_to_compare, 784))
+
+    numpy_ds = list(training_inputs.as_numpy_iterator())
+    ds_size = np.shape(numpy_ds)
+    # Select random image in a random batch
+    for i in range(number_to_compare):
+        batch_index = np.random.randint(0, ds_size[0])
+        input_index = np.random.randint(0, ds_size[2])
+        random_inputs[i] = numpy_ds[batch_index][1][input_index]
+
+    sample = model(tf.constant(random_inputs))
+    network_outputs = sample.numpy()
+    # Create image bloc (original|sep|output)
+    image_size = 28
+    sep_size = 2
+    plot_output = np.zeros((number_to_compare, image_size, 2 * image_size + sep_size))
+    for i in range(number_to_compare):
+        plot_output[i, :, 0:image_size] = random_inputs[i, :].reshape((image_size, image_size))
+        plot_output[i, :, image_size + sep_size:2 * image_size + sep_size] = network_outputs[i].reshape((image_size, image_size))
+
+    # Compute subplot size
+    column_number = int(np.sqrt(number_to_compare))
+    line_number = int(np.sqrt(number_to_compare))
+    delta = column_number * column_number - number_to_compare
+    if delta < 0:
+        line_number += 1
+
+    fig, axs = plt.subplots(line_number, column_number)
+    fig.suptitle('Original images - Computed images')
+
+    # Plot bloc images
+    for i in range(column_number):
+        for j in range(column_number):
+            image = plot_output[j + column_number * i, :, :]
+            axs[i][j].imshow(image, cmap='gray')
+    # Fill in last row
+    for j in range(-delta):
+        image = plot_output[j + column_number * (line_number - 1), :, :]
+        axs[line_number - 1][j].imshow(image, cmap='gray')
 
     plt.show()
