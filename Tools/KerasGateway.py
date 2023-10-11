@@ -73,3 +73,35 @@ def auto_encoder():
     )
 
     ph.plot_keras_auto_encoder_results(model, ds_test, 36)
+
+def convolution():
+    ds_train, ds_test = openMl.get_keras_dataset_convolution(dataset_id, feature_name, batch_size)
+
+    # Build model
+    inputs = keras.Input(shape=(28, 28, 1))
+    x = layers.Rescaling(1.0 / 255)(inputs)
+
+    x = layers.Convolution2D(3, 6, 2)(x)
+    x = layers.MaxPool2D()(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(800, "relu", name="middle_dense")(x)
+
+    outputs = layers.Dense(class_number, activation="softmax", name="outputs")(x)
+
+    model = keras.Model(inputs, outputs)
+
+    # Config of model with losses and metrics
+    model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    # Model training
+    epochs = 20
+    model.fit(
+        ds_train,
+        epochs=epochs,
+        shuffle=True,
+        validation_data=ds_test
+    )

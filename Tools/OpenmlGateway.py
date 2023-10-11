@@ -101,3 +101,14 @@ def get_keras_dataset_auto_encoder(dataset_id, feature_class, batch_size=1000, t
     ds_train = ds_train.shuffle(buffer_size=1024).batch(batch_size)
     ds_test = ds_test.shuffle(buffer_size=1024).batch(batch_size)
     return ds_train, ds_test
+
+def get_keras_dataset_convolution(dataset_id, feature_class, batch_size=1000, training_cutoff_percent = 0.8):
+    dataset = openml.datasets.get_dataset(dataset_id)
+    datas, data_targets, z, column_indexes, = dataset.get_data(feature_class)
+
+    dataset = tf.data.Dataset.from_tensor_slices((datas.values.reshape((datas.shape[0], 28, 28)).astype("float32"), keras.utils.to_categorical(data_targets.values.codes)))
+
+    ds_train, ds_test = keras.utils.split_dataset(dataset, training_cutoff_percent)
+    ds_train = ds_train.shuffle(buffer_size=1024).batch(batch_size)
+    ds_test = ds_test.shuffle(buffer_size=1024).batch(batch_size)
+    return ds_train, ds_test

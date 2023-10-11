@@ -14,4 +14,5 @@ else:
     print("Keras launched")
     # k_gateway.perceptron()
     # k_gateway.auto_encoder()
+    k_gateway.convolution()
 
