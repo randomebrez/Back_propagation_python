@@ -7,14 +7,17 @@ import Class.NetworkBuilder as builder
 import Class.Model as model
 
 # Get dataset from openML
-def get_dataset():
+def get_dataset(input_shape='column'):
     dataset_id = 40996
     feature_name = 'class'
     class_number = 10
     normalization_constant = 255
     batch_size = 100
 
-    return manager.get_column_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
+    if input_shape == 'column':
+        return manager.get_column_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
+    elif input_shape == 'image':
+        return manager.get_image_dataset(dataset_id, feature_name, class_number, normalization_constant, batch_size=batch_size)
 
 def test_perceptron():
     ds_inputs, ds_targets, input_shape, output_shape = get_dataset()
@@ -100,7 +103,7 @@ def test_auto_encoder():
     return network
 
 def test_conv_net():
-    ds_inputs, ds_targets, input_shape, output_shape = get_dataset()
+    ds_inputs, ds_targets, input_shape, output_shape = get_dataset(input_shape='image')
 
     network_builder = builder.NetworkBuilder(input_shape, output_shape)
 
@@ -121,7 +124,7 @@ def test_conv_net():
         initial_learning_rate=0.1,
         final_learning_rate=0.01,
         learning_rate_steps=5,
-        epochs=10)
+        epochs=20)
 
     start = time.time()
 
