@@ -28,23 +28,22 @@ def train_network(ds_inputs, ds_targets, network, train_model):
     training_inputs, training_targets = ds_inputs[0], ds_targets[0]
 
     # Train network
-    train_batch_cost_fct = []
-    train_batch_mean_cost_fct = []
+    mean_cost_by_batch_epochs = []
+    mean_cost_epochs = []
 
     for i in range(train_model.epochs):
-        cost_function = network.train(training_inputs, training_targets, train_model)
-        train_batch_cost_fct = np.concatenate((train_batch_cost_fct, cost_function))
-        mean_cost_fct = np.mean(cost_function)
-        train_batch_mean_cost_fct.append(mean_cost_fct)
-        print("Run {0} done. Mean error : {1} -  Execution time : {2}".format(i + 1, round(float(mean_cost_fct), 5), round(time.time() - tick, 2)))
+        cost_all_batch = network.train(training_inputs, training_targets, train_model)
+        mean_cost_by_batch_epochs = np.concatenate((mean_cost_by_batch_epochs, cost_all_batch))
+        mean_cost_epochs.append(np.mean(cost_all_batch))
+        print("Run {0} done. Mean error : {1} -  Execution time : {2}".format(i + 1, round(float(mean_cost_epochs[-1]), 5), round(time.time() - tick, 2)))
         training_inputs, training_targets = shuffle_training_datas(training_inputs, training_targets)
         tick = time.time()
 
     print('Execution time of \'train_network\' : {0}'.format(round(time.time() - tick, 2)))
 
     return {
-        'batch_costs': train_batch_cost_fct,
-        'mean_batch_costs': train_batch_mean_cost_fct
+        'batch_costs': mean_cost_by_batch_epochs,
+        'mean_batch_costs': mean_cost_epochs
     }
 
 def shuffle_training_datas(training_inputs, training_targets):

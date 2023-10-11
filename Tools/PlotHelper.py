@@ -3,10 +3,10 @@ import tensorflow as tf
 import numpy as np
 
 
-def plot_perceptron_result(pre_train_test_result, train_batch_costs, mean_batch_costs, post_train_test_result):
+def plot_perceptron_result(pre_train_test_result, mean_cost_by_batch_epochs, mean_cost_epochs, post_train_test_result):
     x_test = np.arange(1, len(pre_train_test_result['accuracy']) + 1)
-    x_train = np.arange(1, len(train_batch_costs) + 1)
-    x_train_mean = np.linspace(0, len(x_train), num=len(mean_batch_costs))
+    x_train = np.arange(1, len(mean_cost_by_batch_epochs) + 1)
+    x_train_mean = np.linspace(0, len(x_train), num=len(mean_cost_epochs))
 
     fig, axs = plt.subplots(2, 2)
     axs[0, 0].plot(x_test, pre_train_test_result['accuracy'], 'r-')
@@ -25,8 +25,8 @@ def plot_perceptron_result(pre_train_test_result, train_batch_costs, mean_batch_
     axs[0, 1].set_ylim(bottom=0)
     axs[0, 1].set_title('Cost on test batches before & after training')
 
-    axs[1, 1].plot(x_train, train_batch_costs, 'b-')
-    axs[1, 1].plot(x_train_mean, mean_batch_costs, 'r-')
+    axs[1, 1].plot(x_train, mean_cost_by_batch_epochs, 'b-')
+    axs[1, 1].plot(x_train_mean, mean_cost_epochs, 'r-')
     axs[1, 1].set_title('Cost evolution during training')
     axs[1, 1].set_ylim(bottom=0)
 
