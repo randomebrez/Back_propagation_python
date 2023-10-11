@@ -108,7 +108,7 @@ def test_conv_net():
     network_builder = builder.NetworkBuilder(input_shape, output_shape)
 
     network_builder.add_conv_fft_layer(3, 6, 2, 'relu')
-    # network_builder.add_pool_layer(2, 'max')
+    network_builder.add_pool_layer(2, 'max')
     network_builder.add_flat_layer()
 
     network_builder.add_dense_layer(800)
@@ -121,10 +121,10 @@ def test_conv_net():
     train_model = model.ModelParameters(
         computer.cross_entropy,
         computer.cross_entropy_derivative,
-        initial_learning_rate=0.1,
-        final_learning_rate=0.01,
-        learning_rate_steps=5,
-        epochs=20)
+        initial_learning_rate=0.01,
+        final_learning_rate=0.001,
+        learning_rate_steps=10,
+        epochs=5)
 
     start = time.time()
 
@@ -137,7 +137,7 @@ def test_conv_net():
     ph.plot_perceptron_result(pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test)
 
     tick = time.time()
-    print("Auto-encoder network execution time : {0}".format(tick - start))
+    print("Convolution network execution time : {0}".format(tick - start))
     return network
 
 def test_perceptron_ae_combined():

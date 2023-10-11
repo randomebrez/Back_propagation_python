@@ -9,6 +9,7 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         self.filters = np.array([])
         self.mirror_filters = np.array([])
         self.parameters = {'input_shape': (0, 0, 0), 'filter_number': filter_number, 'kernel_size': [0, kernel_size, kernel_size], 'stride': [0, stride, stride], 'zero_padding': [0, 0, 0], 'use_bias': use_bias}
+        self.use_bias = use_bias
         self.biases = np.array([])
         self.activation_function = activation_function
         self.activation_function_with_derivative = activation_function_with_derivative
@@ -28,7 +29,7 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
 
         self.filters = 0.01 * (np.random.rand(input_depth * filter_number, kernel_size[1], kernel_size[2]) - 0.5) * 2
         if self.parameters['use_bias']:
-            self.biases = np.random.rand(self.parameters['filter_number'], 1, 1)
+            self.biases = 0.01 * np.random.rand(self.parameters['filter_number'], 1, 1)
 
         self.init_cache()
 
@@ -124,23 +125,23 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
                 conv_result = np.sum(product, axis=(1,2,3)).reshape(batch_size, 1)
                 feature_maps[:, f_min:f_min+input_shape[0], x, y] += conv_result
 
-            # If backpropagation is needed, store d_activation values
-            if store:
-                activations, sigma_primes = self.activation_function_with_derivative(feature_maps)
-                self.cache['sigma_primes'] = sigma_primes
-            else:
-                activations = self.activation_function(feature_maps)
+        # If backpropagation is needed, store d_activation values
+        if store:
+            activations, sigma_primes = self.activation_function_with_derivative(feature_maps)
+            self.cache['sigma_primes'] = sigma_primes
+        else:
+            activations = self.activation_function(feature_maps)
 
-            # Apply bias
-            # if self.parameters['use_bias']:
-            #     shaped_feature_maps += self.biases
+        # Apply bias
+        if self.parameters['use_bias']:
+            activations += self.biases
 
-            # Store activations if asked, or for output layer
-            if store or self.is_output_layer:
-                self.cache['activation_values'] = activations
+        # Store activations if asked, or for output layer
+        if store or self.is_output_layer:
+            self.cache['activation_values'] = activations
 
-            # print("Conv FF exec time : {0}".format(round(time.time() - tick, 2)))
-            return activations
+        # print("Conv FF exec time : {0}".format(round(time.time() - tick, 2)))
+        return activations
 
     def conv_compute_backward(self, inputs):
         input_shape = self.parameters['input_shape']
@@ -206,6 +207,10 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
                 dE_dw[f_min:f_min+input_shape[0]] += np.sum(patch * shaped_bp_values[:, filter_index, x, y].reshape(batch_size, 1, 1, 1), axis=0)
 
         self.filters -= learning_rate * dE_dw / batch_size
+
+        if self.use_bias:
+            bias_variation = learning_rate * np.mean(shaped_bp_values, axis=(0,2,3), keepdims=True).reshape((filter_number, 1, 1))
+            self.biases -= bias_variation
 
     def patches_generator(self, inputs, input_shape, kernel_size, stride, padding):
         input_x, input_y = input_shape[1], input_shape[2]

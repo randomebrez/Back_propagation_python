@@ -35,4 +35,5 @@ class FlatLayer(LayerBase.__LayerBase):
     def compute_backward(self, inputs):
         input_shape = self.parameters['input_shape']
         batch_size = inputs.shape[0]
-        return np.transpose(inputs).reshape((batch_size, input_shape[0], input_shape[1], input_shape[2]))
+        reshaped_inputs = inputs.reshape((batch_size, input_shape[0], input_shape[1], input_shape[2]))
+        return reshaped_inputs
