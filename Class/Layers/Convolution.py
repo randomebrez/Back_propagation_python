@@ -166,9 +166,24 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         return helper.de_conv_res_shape(batch_size, conv_res, kernel_size, filter_number, zero_padding, input_shape)
 
     def patch_compute_backward(self, inputs):
-        back_activation_values = self.cache['sigma_primes'] * inputs
+        input_shape = self.parameters['input_shape']
+        filter_number = self.parameters['filter_number']
+        kernel_size = self.parameters['kernel_size']
+        zero_padding = self.parameters['zero_padding']
+        stride = self.parameters['stride']
+        sigma_primes = self.cache['sigma_primes']
+
+        back_activation_values = sigma_primes * inputs
         self.cache['back_activation_values'] = back_activation_values
-        return []
+
+        batch_size = back_activation_values.shape[0]
+        bp_outputs = np.zeros((batch_size, input_shape[0], input_shape[1], input_shape[2]))
+        for patch, x, y in self.patches_generator(bp_outputs, input_shape, kernel_size, stride, zero_padding):
+            for filter_index in range(filter_number):
+                f_min = filter_index * input_shape[0]
+                temp = back_activation_values[:, filter_index, x, y]
+                patch += self.filters[f_min:f_min+input_shape[0]] * temp[:, np.newaxis, np.newaxis, np.newaxis]
+        return bp_outputs
 
     def conv_update(self, previous_layer_activation, learning_rate):
         input_shape = self.parameters['input_shape']

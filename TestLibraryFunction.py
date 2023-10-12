@@ -108,7 +108,7 @@ def test_conv_net():
     network_builder = builder.NetworkBuilder(input_shape, output_shape)
 
     network_builder.add_conv_fft_layer(3, 6, 2, 'relu')
-    network_builder.add_pool_layer(2, 'max')
+    network_builder.add_conv_fft_layer(3, 2, 2, 'relu')
     network_builder.add_flat_layer()
 
     network_builder.add_dense_layer(800)
@@ -124,7 +124,7 @@ def test_conv_net():
         initial_learning_rate=0.01,
         final_learning_rate=0.001,
         learning_rate_steps=10,
-        epochs=5)
+        epochs=20)
 
     start = time.time()
 
