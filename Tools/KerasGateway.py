@@ -30,16 +30,13 @@ def perceptron():
     )
 
     # Model training
-    epochs = 25
+    epochs = 10
     model.fit(
         ds_train,
         epochs=epochs,
         shuffle=True,
         validation_data=ds_test
     )
-
-    # Evaluate Model
-    model.evaluate(ds_test)
 
 def auto_encoder():
     ds_train, ds_test = openMl.get_keras_dataset_auto_encoder(dataset_id, feature_name, batch_size)
@@ -105,3 +102,42 @@ def convolution():
         shuffle=True,
         validation_data=ds_test
     )
+
+def auto_encoder_convolution(input_shape, latent_space=10):
+    ds_train, ds_test = openMl.get_keras_dataset_ae_convolution(dataset_id, feature_name, batch_size)
+
+    # Build model
+    encoder_inputs = keras.Input(shape=input_shape)
+    x = layers.Rescaling(1.0 / 255)(encoder_inputs)
+
+    x = layers.Convolution2D(3, 6, 2)(x)
+    x = layers.Convolution2D(10, 2, 2)(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(128, "relu", name="encoder_dense")(x)
+
+    x = layers.Dense(latent_space, "relu", name="latent_layer")(x)
+
+    x = layers.Dense(250, "relu", name="decoder_dense")(x)
+    x = layers.Reshape((5, 5, 10))(x)
+    x = layers.Conv2DTranspose(10, 3, 2)(x)
+    x = layers.Conv2DTranspose(3, 6, 2)(x)
+    decoder_outputs = layers.Conv2DTranspose(1, 3)(x)
+
+    ae_model = keras.Model(encoder_inputs, decoder_outputs, name='ae')
+
+    # Config of model with losses and metrics
+    ae_model.compile(
+        optimizer=keras.optimizers.Adam(1e-3),
+        loss="mean_squared_error",
+    )
+
+    # Model training
+    epochs = 100
+    ae_model.fit(
+        ds_train,
+        epochs=epochs,
+        shuffle=True,
+        validation_data=ds_test
+    )
+
+    ph.plot_keras_auto_encoder_convolution_results(ae_model, ds_train, (28,28), 36)

@@ -22,10 +22,10 @@ def get_column_data_set_normalized(dataset_id, feature_class, class_number, norm
         max_index = min(min_index + batch_size, ds_size)
 
         input_batch = datas.iloc[min_index:max_index] / normalization_constant
-        input_batches[batch_index, :, :] = input_batch.to_numpy()
+        input_batches[batch_index] = input_batch.to_numpy()
 
         target_batch = rework_targets(data_targets.iloc[min_index:max_index], class_number)
-        target_batches[batch_index, :, :] = target_batch
+        target_batches[batch_index] = target_batch
 
         batch_index += 1
 
@@ -107,6 +107,18 @@ def get_keras_dataset_convolution(dataset_id, feature_class, batch_size=1000, tr
     datas, data_targets, z, column_indexes, = dataset.get_data(feature_class)
 
     dataset = tf.data.Dataset.from_tensor_slices((datas.values.reshape((datas.shape[0], 28, 28)).astype("float32"), keras.utils.to_categorical(data_targets.values.codes)))
+
+    ds_train, ds_test = keras.utils.split_dataset(dataset, training_cutoff_percent)
+    ds_train = ds_train.shuffle(buffer_size=1024).batch(batch_size)
+    ds_test = ds_test.shuffle(buffer_size=1024).batch(batch_size)
+    return ds_train, ds_test
+
+def get_keras_dataset_ae_convolution(dataset_id, feature_class, batch_size=1000, training_cutoff_percent = 0.8):
+    dataset = openml.datasets.get_dataset(dataset_id)
+    datas, data_targets, z, column_indexes, = dataset.get_data(feature_class)
+
+    reshaped_dataset = datas.values.reshape((datas.shape[0], 28, 28))
+    dataset = tf.data.Dataset.from_tensor_slices((reshaped_dataset.astype("float32"), reshaped_dataset.astype("float32")))
 
     ds_train, ds_test = keras.utils.split_dataset(dataset, training_cutoff_percent)
     ds_train = ds_train.shuffle(buffer_size=1024).batch(batch_size)
