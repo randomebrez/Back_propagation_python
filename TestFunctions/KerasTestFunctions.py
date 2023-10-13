@@ -1,24 +1,23 @@
 import numpy as np
 from tensorflow import keras
 from keras import layers
-import Tools.OpenmlGateway as openMl
+import DataSets.KerasFormatDS as ds_format
+import DataSets.DatasetParameters as ds_parameters
 import Tools.PlotHelper as ph
 
-dataset_id = 40996
-input_shape = (28, 28)
-column_shape = 28 * 28
-feature_name = 'class'
-class_number = 10
-batch_size = 100
+ds_param = ds_parameters.get_example_dataset()
 
-def perceptron():
-    ds_train, ds_test = openMl.get_keras_dataset(dataset_id, feature_name, batch_size)
+def perceptron(hidden_layer_sizes, epochs =10):
+    ds_train, ds_test = ds_format.classifier_dataset_column_inputs(ds_param.dataset_id, ds_param.feature_name, ds_param.batch_size)
+
     # Build model
-    inputs = keras.Input(shape=column_shape)
+    inputs = keras.Input(shape=ds_param.flat_input_size)
+
     x = layers.Rescaling(1.0 / 255)(inputs)
-    for size in [700]:
+    for size in hidden_layer_sizes:
         x = layers.Dense(size, "relu", name="dense_1")(x)
-    outputs = layers.Dense(class_number, activation="softmax", name="dense_2")(x)
+
+    outputs = layers.Dense(ds_param.class_number, activation="softmax", name="dense_2")(x)
 
     model = keras.Model(inputs, outputs)
 
@@ -30,7 +29,6 @@ def perceptron():
     )
 
     # Model training
-    epochs = 10
     model.fit(
         ds_train,
         epochs=epochs,
@@ -38,18 +36,25 @@ def perceptron():
         validation_data=ds_test
     )
 
-def auto_encoder():
-    ds_train, ds_test = openMl.get_keras_dataset_auto_encoder(dataset_id, feature_name, batch_size)
+def perceptron_auto_encoder(hidden_layer_sizes, latent_space=10, epochs=10):
+    ds_train, ds_test = ds_format.auto_encoder_dataset_column_inputs(ds_param.dataset_id, ds_param.feature_name, ds_param.batch_size)
 
     # Build model
-    inputs = keras.Input(shape=column_shape)
+    inputs = keras.Input(shape=ds_param.flat_input_size)
     x = layers.Rescaling(1.0 / 255)(inputs)
 
-    layer_sizes = [700, 100, 700]
-    for index, size in enumerate(layer_sizes):
-        x = layers.Dense(size, "relu", name="dense_{0}".format(index))(x)
+    # encoder block
+    for index, size in enumerate(hidden_layer_sizes):
+        x = layers.Dense(size, "relu", name="encoder_{0}".format(index))(x)
 
-    outputs = layers.Dense(np.product(np.asarray(input_shape)), activation="relu", name="dense_{0}".format(len(layer_sizes)))(x)
+    # latent space
+    x = layers.Dense(latent_space, 'relu', name='latent_space')(x)
+
+    # decoder block
+    for index, size in enumerate(reversed(hidden_layer_sizes)):
+        x = layers.Dense(size, "relu", name="decoder_{0}".format(index))(x)
+
+    outputs = layers.Dense(np.product(np.asarray(ds_param.input_shape)), activation="relu", name="outputs")(x)
 
     model = keras.Model(inputs, outputs)
 
@@ -61,7 +66,6 @@ def auto_encoder():
     )
 
     # Model training
-    epochs = 20
     model.fit(
         ds_train,
         epochs=epochs,
@@ -71,8 +75,8 @@ def auto_encoder():
 
     ph.plot_keras_auto_encoder_results(model, ds_test, 36)
 
-def convolution():
-    ds_train, ds_test = openMl.get_keras_dataset_convolution(dataset_id, feature_name, batch_size)
+def convolution(epochs=10):
+    ds_train, ds_test = ds_format.convolution_dataset_image_inputs(ds_param.dataset_id, ds_param.feature_name, ds_param.batch_size)
 
     # Build model
     inputs = keras.Input(shape=(28, 28, 1))
@@ -83,7 +87,7 @@ def convolution():
     x = layers.Flatten()(x)
     x = layers.Dense(800, "relu", name="middle_dense")(x)
 
-    outputs = layers.Dense(class_number, activation="softmax", name="outputs")(x)
+    outputs = layers.Dense(ds_param.class_number, activation="softmax", name="outputs")(x)
 
     model = keras.Model(inputs, outputs)
 
@@ -95,7 +99,6 @@ def convolution():
     )
 
     # Model training
-    epochs = 20
     model.fit(
         ds_train,
         epochs=epochs,
@@ -103,8 +106,8 @@ def convolution():
         validation_data=ds_test
     )
 
-def auto_encoder_convolution(input_shape, latent_space=10):
-    ds_train, ds_test = openMl.get_keras_dataset_ae_convolution(dataset_id, feature_name, batch_size)
+def convolution_auto_encoder(input_shape, latent_space=10, epochs=10):
+    ds_train, ds_test = ds_format.dataset_ae_convolution_dataset_image_inputs(ds_param.dataset_id, ds_param.feature_name, ds_param.batch_size)
 
     # Build model
     encoder_inputs = keras.Input(shape=input_shape)
@@ -132,7 +135,6 @@ def auto_encoder_convolution(input_shape, latent_space=10):
     )
 
     # Model training
-    epochs = 100
     ae_model.fit(
         ds_train,
         epochs=epochs,

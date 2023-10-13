@@ -9,7 +9,7 @@ class NormalizationLayer(LayerBase.__LayerBase):
         self.output_shape = input_shape
 
     def compute(self, inputs, store):
-        activations = self.activation_function(inputs)
+        activations = inputs # self.activation_function(inputs)
 
         if store or self.is_output_layer:
             self.cache['activation_values'] = activations
