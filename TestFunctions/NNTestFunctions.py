@@ -14,7 +14,7 @@ def perceptron(hidden_layer_sizes, epochs=10):
     # Fetch dataset
     ds_inputs, ds_targets = ds_format.get_column_data_set_normalized(ds_param.dataset_id, ds_param.feature_name, ds_param.class_number, ds_param.normalization_constant, batch_size=ds_param.batch_size)
     # Build network
-    network = model_builder.perceptron(ds_param.input_shape, ds_param.class_number, hidden_layer_sizes)
+    network = model_builder.perceptron(ds_param.flat_input_size, ds_param.class_number, hidden_layer_sizes)
     # Build training model
     model_parameters = model.ModelParameters(
         computer.cross_entropy,
@@ -41,7 +41,7 @@ def auto_encoder(hidden_layer_sizes, latent_space=10, epochs=10):
     # Fetch dataset
     ds_inputs, ds_targets = ds_format.get_column_data_set_normalized(ds_param.dataset_id, ds_param.feature_name, ds_param.class_number, ds_param.normalization_constant, batch_size=ds_param.batch_size)
     # Build network
-    network = model_builder.auto_encoder(ds_param.input_shape, ds_param.class_number, hidden_layer_sizes, latent_space)
+    network = model_builder.auto_encoder(ds_param.flat_input_size, ds_param.class_number, hidden_layer_sizes, latent_space)
     # Build training model
     model_parameters = model.ModelParameters(
         computer.mean_square_error,
@@ -95,7 +95,7 @@ def perceptron_ae_combined(perceptron_hidden_layer_sizes, ae_hidden_layer_sizes,
     ds_inputs, ds_targets = ds_format.get_column_data_set_normalized(ds_param.dataset_id, ds_param.feature_name, ds_param.class_number, ds_param.normalization_constant, batch_size=ds_param.batch_size)
 
     # Perceptron
-    perceptron_network = model_builder.perceptron(ds_param.input_shape, ds_param.class_number, perceptron_hidden_layer_sizes)
+    perceptron_network = model_builder.perceptron(ds_param.flat_input_size, ds_param.class_number, perceptron_hidden_layer_sizes)
     perceptron_model_parameters = model.ModelParameters(
         computer.cross_entropy,
         computer.cross_entropy_derivative,
@@ -112,7 +112,7 @@ def perceptron_ae_combined(perceptron_hidden_layer_sizes, ae_hidden_layer_sizes,
     print("Perceptron network execution time : {0}".format(tick - start))
 
     # Auto_encoding
-    ae_network = model_builder.auto_encoder(ds_param.input_shape, ds_param.class_number, ae_hidden_layer_sizes, ae_latent_space)
+    ae_network = model_builder.auto_encoder(ds_param.flat_input_size, ds_param.class_number, ae_hidden_layer_sizes, ae_latent_space)
     ae_model_parameters = model.ModelParameters(
         computer.mean_square_error,
         computer.distance_get,
@@ -127,17 +127,26 @@ def perceptron_ae_combined(perceptron_hidden_layer_sizes, ae_hidden_layer_sizes,
     ae_test_result = manager.test_network(ds_inputs, ds_inputs, ae_network, ae_model_parameters)
     print("Auto_encoder network execution time : {0}".format(time.time() - tick))
 
-    # Combine both networks
-    tick = time.time()
-    test_inputs, test_targets = ds_inputs[1], ds_targets[1]
-    ae_outputs = np.zeros(test_inputs.shape)
-    for i in range(test_inputs.shape[0]):
-        # Compute using auto-encoding
-        ae_network.feed_forward(test_inputs[i], False)
-        ae_outputs[i] = ae_network.get_outputs()
+    # Combined
+    ae_perceptron = model_builder.perceptron(ds_param.flat_input_size, ds_param.class_number, perceptron_hidden_layer_sizes)
 
-    # Compute perceptron with ae outputs
-    combined_test_result = perceptron_network.test(ae_outputs, test_targets, perceptron_model_parameters)
+    tick = time.time()
+    train_inputs, test_inputs = ds_inputs[0], ds_inputs[1]
+    ae_train_outputs = np.zeros(train_inputs.shape)
+    ae_test_outputs = np.zeros(test_inputs.shape)
+
+    # Compute using auto-encoding
+    for i in range(train_inputs.shape[0]):
+        ae_network.feed_forward(train_inputs[i], False)
+        ae_train_outputs[i] = ae_network.get_outputs()
+    for i in range(test_inputs.shape[0]):
+        ae_network.feed_forward(test_inputs[i], False)
+        ae_test_outputs[i] = ae_network.get_outputs()
+    ae_output_ds = [ae_train_outputs, ae_test_outputs]
+
+    # training
+    manager.train_network(ae_output_ds, ds_targets, ae_perceptron, perceptron_model_parameters)
+    ae_perceptron_test_result = manager.test_network(ae_output_ds, ds_targets, ae_perceptron, perceptron_model_parameters)
     print("Combined network execution time : {0}".format(time.time() - tick))
 
-    ph.plot_ae_perceptron_combined(perceptron_test_result, ae_test_result, combined_test_result)
+    ph.plot_ae_perceptron_combined(perceptron_test_result, ae_test_result, ae_perceptron_test_result)

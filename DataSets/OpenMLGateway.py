@@ -5,17 +5,17 @@ import os
 
 working_directory = r"C:\Users\nico-\Desktop\OpenML_Datasets"
 
-def get_dataset(dataset_id, feature_class):
+def get_dataset(dataset_id, feature_name):
     dataset_directory = r"{0}\{1}".format(working_directory, dataset_id)
     file_path_inputs, file_path_targets = r"{0}\inputs.txt".format(dataset_directory), r"{0}\targets.txt".format(dataset_directory)
 
     if (os.path.exists(dataset_directory)):
         datas = pd.read_csv(file_path_inputs)
-        data_targets = pd.read_csv(file_path_targets)
+        data_targets = pd.read_csv(file_path_targets).get(feature_name)
     else:
         dataset = openml.datasets.get_dataset(dataset_id)
         # Get dataset from openML
-        datas, data_targets, z, column_indexes, = dataset.get_data(feature_class)
+        datas, data_targets, z, column_indexes, = dataset.get_data(feature_name)
         # Create directory
         os.mkdir(dataset_directory)
         # Write inputs

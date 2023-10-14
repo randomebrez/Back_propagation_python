@@ -12,7 +12,7 @@ class DenseLayer(LayerBase.__LayerBase):
 
     def initialize(self, input_shape):
         input_number = np.product(np.asarray(input_shape))
-        self.weight_matrix = 0.1 * (np.random.rand(input_number, self.output_shape[1]) - 0.5) * 2
+        self.weight_matrix = 0.01 * (np.random.rand(input_number, self.output_shape[1]) - 0.5) * 2
         self.init_cache()
 
     def init_cache(self):
