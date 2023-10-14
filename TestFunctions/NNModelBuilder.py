@@ -46,9 +46,11 @@ def convolution(input_shape, output_shape):
     network_builder = builder.NetworkBuilder(input_shape, output_shape)
 
     network_builder.add_conv_fft_layer(3, 6, 2, 'relu')
+    network_builder.add_pool_layer(2, mode='max')
+    network_builder.add_conv_fft_layer(5, 2, 2, 'relu')
     network_builder.add_flat_layer()
 
-    network_builder.add_dense_layer(800)
+    network_builder.add_dense_layer(45)
     network_builder.add_one_to_one_layer('relu')
 
     network_builder.add_dense_layer(10)
