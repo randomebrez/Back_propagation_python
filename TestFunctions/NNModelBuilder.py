@@ -58,3 +58,25 @@ def convolution(input_shape, output_shape):
     network = network_builder.build()
 
     return network
+
+def ae_convolution(input_shape, latent_space):
+    network_builder = builder.NetworkBuilder(input_shape, input_shape)  # (1, 28, 28)
+
+    network_builder.add_conv_fft_layer(4, 6, 2, 'relu')  # (4, 10, 10)
+    network_builder.add_conv_fft_layer(8, 2, 2, 'relu')  # (8, 5, 5)
+    network_builder.add_flat_layer()
+
+    network_builder.add_dense_layer(latent_space)
+    network_builder.add_one_to_one_layer('relu')
+
+    network_builder.add_dense_layer(16 * 5 * 5)
+    network_builder.add_one_to_one_layer('relu')
+
+    network_builder.add_reshape_layer((16, 5, 5))  # (16, 5, 5)
+    network_builder.add_transposed_conv_layer(8, 2, 2, 1, 'relu')  # (8, 8, 8)
+    network_builder.add_transposed_conv_layer(4, 4, 2, 2, 'relu')  # (4, 14, 14)
+    network_builder.add_transposed_conv_layer(1, 6, 2, 2, 'sigmoid', is_output_layer=True)  # (1, 28, 28)
+    # network_builder.add_one_to_one_layer('sigmoid', is_output_layer=True)
+    network = network_builder.build()
+
+    return network

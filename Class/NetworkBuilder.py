@@ -5,7 +5,9 @@ from Class.Layers import Dense as d_layer
 from Class.Layers import OneToOne as oto_layer
 from Class.Layers import ConvDot as cd_layer
 from Class.Layers import Convolution as c_layer
+from Class.Layers import TransposedConvolution as tc_layer
 from Class.Layers import Flatten as f_layer
+from Class.Layers import Reshape as r_layer
 from Class.Layers import MinMaxPooling as p_layer
 from Class.Layers import Normalization as n_layer
 
@@ -61,8 +63,17 @@ class NetworkBuilder:
         layer = c_layer.ConvolutionFFTLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias)
         self.wip_network.layers.append(layer)
 
+    def add_transposed_conv_layer(self, filter_number: int, kernel_size: int, stride: int, zero_padding: int, activation_function: str, is_output_layer=False, use_bias=True):
+        activations = self.activation_functions[activation_function]
+        layer = tc_layer.TransposedConvolutionLayer(filter_number, kernel_size, stride, zero_padding, activations[0], activations[1], is_output_layer, use_bias)
+        self.wip_network.layers.append(layer)
+
     def add_flat_layer(self, is_output_layer=False):
         layer = f_layer.FlatLayer(is_output_layer)
+        self.wip_network.layers.append(layer)
+
+    def add_reshape_layer(self, output_shape, is_output_layer=False):
+        layer = r_layer.ReshapeLayer(output_shape, is_output_layer)
         self.wip_network.layers.append(layer)
 
     def add_pool_layer(self, kernel_size: int, mode: str, is_output_layer=False):

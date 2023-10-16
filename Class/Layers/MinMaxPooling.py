@@ -8,7 +8,7 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
 
     def __init__(self, kernel_size, mode='max', is_output_layer=False):
         self.parameters = {'input_shape': (0, 0, 0), 'kernel_size': kernel_size, 'mode': mode}
-        super().__init__('dense', is_output_layer)
+        super().__init__('pool', is_output_layer)
 
     def initialize(self, input_shape):
         k_size = self.parameters['kernel_size']

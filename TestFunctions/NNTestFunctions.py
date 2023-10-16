@@ -150,3 +150,29 @@ def perceptron_ae_combined(perceptron_hidden_layer_sizes, ae_hidden_layer_sizes,
     print("Combined network execution time : {0}".format(time.time() - tick))
 
     ph.plot_ae_perceptron_combined(perceptron_test_result, ae_test_result, ae_perceptron_test_result)
+
+def auto_encoder_convolution(latent_space, epochs=10):
+    ds_inputs, ds_targets = ds_format.get_image_data_set_normalized(ds_param.dataset_id, ds_param.feature_name, ds_param.class_number, ds_param.normalization_constant, batch_size=ds_param.batch_size)
+    # Build network
+    network = model_builder.ae_convolution(ds_param.input_shape, latent_space)
+    # Build training model
+    model_parameters = model.ModelParameters(
+        computer.mean_square_error,
+        computer.distance_get,
+        initial_learning_rate=0.01,
+        final_learning_rate=0.001,
+        learning_rate_steps=10,
+        epochs=epochs)
+
+    start = time.time()
+    # Run model
+    #pre_train_result = manager.test_network(ds_inputs, ds_inputs, network, model_parameters, with_details=False)
+    train_results = manager.train_network(ds_inputs, ds_inputs, network, model_parameters)
+    post_train_test = manager.test_network(ds_inputs, ds_inputs, network, model_parameters, with_details=False)
+
+    # Plot results
+    #ph.plot_perceptron_result(pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test)
+
+    tick = time.time()
+    print("Auto-encoder convolution network execution time : {0}".format(tick - start))
+    return network
