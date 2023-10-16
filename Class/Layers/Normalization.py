@@ -7,6 +7,7 @@ class NormalizationLayer(LayerBase.__LayerBase):
 
     def initialize(self, input_shape):
         self.output_shape = input_shape
+        self.output_dimension = len(input_shape)
 
     def compute(self, inputs, store):
         activations = inputs # self.activation_function(inputs)

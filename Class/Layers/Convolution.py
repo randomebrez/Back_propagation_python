@@ -14,6 +14,7 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         self.activation_function = activation_function
         self.activation_function_with_derivative = activation_function_with_derivative
         super().__init__('convolution', is_output_layer)
+        self.output_dimension = 3
 
     def initialize(self, input_shape):
         input_depth = input_shape[0]
@@ -177,7 +178,7 @@ class ConvolutionFFTLayer(LayerBase.__LayerBase):
         self.cache['back_activation_values'] = back_activation_values
 
         batch_size = back_activation_values.shape[0]
-        bp_outputs = np.zeros((batch_size, input_shape[0], input_shape[1], input_shape[2]))
+        bp_outputs = np.zeros((batch_size,) + input_shape)
         for patch, x, y in self.patches_generator(bp_outputs, input_shape, kernel_size, stride, zero_padding):
             for filter_index in range(filter_number):
                 f_min = filter_index * input_shape[0]

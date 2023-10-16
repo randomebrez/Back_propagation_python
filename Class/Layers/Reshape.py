@@ -8,6 +8,7 @@ class ReshapeLayer(LayerBase.__LayerBase):
         self.parameters = {'input_shape': (0, 0, 0)}
         super().__init__('reshape', is_output_layer)
         self.output_shape = output_shape
+        self.output_dimension = len(output_shape)
 
     def initialize(self, input_shape):
         self.parameters['input_shape'] = input_shape

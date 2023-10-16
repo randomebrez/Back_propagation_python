@@ -14,6 +14,7 @@ class TransposedConvolutionLayer(LayerBase.__LayerBase):
         self.activation_function = activation_function
         self.activation_function_with_derivative = activation_function_with_derivative
         super().__init__('transposed_convolution', is_output_layer)
+        self.output_dimension = 3
 
     def initialize(self, input_shape):
         input_depth = input_shape[0]
@@ -25,14 +26,8 @@ class TransposedConvolutionLayer(LayerBase.__LayerBase):
 
         kernel_size = self.parameters['kernel_size']
         filter_number = self.parameters['filter_number']
-        zero_padding = self.parameters['zero_padding']
-        stride = self.parameters['stride']
 
-        reshaped_input_x = 2 * (kernel_size[1] - zero_padding[1] - 1) + input_shape[1] + (input_shape[1] - 1) * (stride[1] - 1)
-        reshaped_input_y = 2 * (kernel_size[2] - zero_padding[2] - 1) + input_shape[2] + (input_shape[2] - 1) * (stride[2] - 1)
-        self.input_reshaped_shape = (input_depth, reshaped_input_x, reshaped_input_y)
-
-        self.output_shape = self.output_shape_compute()
+        self.output_shape, self.input_reshaped_shape = self.shapes_init(input_shape)
 
         self.filters = 0.01 * (np.random.rand(input_depth * filter_number, kernel_size[1], kernel_size[2]) - 0.5) * 2
         if self.parameters['use_bias']:
@@ -40,14 +35,21 @@ class TransposedConvolutionLayer(LayerBase.__LayerBase):
 
         self.init_cache()
 
-    def output_shape_compute(self):
-        (_, reshaped_input_shape_x, reshaped_input_shape_y) = self.input_reshaped_shape
+    def shapes_init(self, input_shape):
+        input_depth = input_shape[0]
         (_, kernel_size_x, kernel_size_y) = self.parameters['kernel_size']
+        zero_padding = self.parameters['zero_padding']
+        stride = self.parameters['stride']
 
-        x_jump = (reshaped_input_shape_x - kernel_size_x + 1)
-        y_jump = (reshaped_input_shape_y - kernel_size_y + 1)
+        reshaped_input_x = 2 * (kernel_size_x - zero_padding[1] - 1) + input_shape[1] + (input_shape[1] - 1) * (stride[1] - 1)
+        reshaped_input_y = 2 * (kernel_size_y - zero_padding[2] - 1) + input_shape[2] + (input_shape[2] - 1) * (stride[2] - 1)
+        shaped_input_shape = (input_depth, reshaped_input_x, reshaped_input_y)
 
-        return (self.parameters['filter_number'], x_jump, y_jump)
+        x_jump = (reshaped_input_x - kernel_size_x + 1)
+        y_jump = (reshaped_input_y - kernel_size_y + 1)
+        output_shape = (self.parameters['filter_number'], x_jump, y_jump)
+
+        return output_shape, shaped_input_shape
 
     def init_cache(self):
         self.cache['sigma_primes'] = []

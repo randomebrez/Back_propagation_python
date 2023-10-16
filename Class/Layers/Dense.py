@@ -8,11 +8,11 @@ class DenseLayer(LayerBase.__LayerBase):
         self.biases = np.zeros((1, layer_size))
         self.use_bias = use_bias
         super().__init__('dense', is_output_layer)
-        self.output_shape = (1, layer_size)
+        self.output_shape = (layer_size,)
+        self.output_dimension = 1
 
     def initialize(self, input_shape):
-        input_number = np.product(np.asarray(input_shape))
-        self.weight_matrix = 0.01 * (np.random.rand(input_number, self.output_shape[1]) - 0.5) * 2
+        self.weight_matrix = 0.01 * (np.random.rand(input_shape[0], self.output_shape[0]) - 0.5) * 2
         self.init_cache()
 
     def init_cache(self):
@@ -23,11 +23,8 @@ class DenseLayer(LayerBase.__LayerBase):
         self.init_cache()
 
     def compute(self, inputs, store):
-        # if inputs are not organized as (batch_index, input_values) reshape them to get row wise inputs
-        shaped_inputs = self.shape_input(inputs)
-
         # Aggregate inputs, weights, and biases
-        aggregation_result = np.dot(shaped_inputs, self.weight_matrix) + self.biases
+        aggregation_result = np.dot(inputs, self.weight_matrix) + self.biases
 
         # Store activations if asked, or for output layer
         if store or self.is_output_layer:
@@ -53,14 +50,6 @@ class DenseLayer(LayerBase.__LayerBase):
         # Update weight
         weight_gradient = np.dot(np.transpose(previous_layer_activation), bp_inputs)
         self.weight_matrix -= (learning_rate / sample_number) * weight_gradient
-
-    def shape_input(self, inputs):
-        if len(inputs.shape) < 2:
-            return inputs
-
-        batch_number = inputs.shape[0]
-        item_input_number = np.product(inputs.shape[1:])
-        return inputs.reshape((batch_number, item_input_number))
 
     def get_back_activation_values(self):
         return self.cache['back_activation_values']

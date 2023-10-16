@@ -13,6 +13,7 @@ class OneToOneLayer(LayerBase.__LayerBase):
 
     def initialize(self, input_shape):
         self.output_shape = input_shape
+        self.output_dimension = len(input_shape)
 
     def compute(self, inputs, store):
         # If backpropagation is needed, store d_activation values

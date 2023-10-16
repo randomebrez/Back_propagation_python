@@ -9,6 +9,7 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
     def __init__(self, kernel_size, mode='max', is_output_layer=False):
         self.parameters = {'input_shape': (0, 0, 0), 'kernel_size': kernel_size, 'mode': mode}
         super().__init__('pool', is_output_layer)
+        self.output_dimension = 3
 
     def initialize(self, input_shape):
         k_size = self.parameters['kernel_size']
@@ -34,8 +35,7 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
         row_wise_values = self.cache['r_wise']
 
         # Dilate column wise
-        c_dilate = np.zeros((col_wise_values.shape[1], col_wise_values.shape[2], col_wise_values.shape[3],
-                             k_size * col_wise_values.shape[4]))
+        c_dilate = np.zeros((col_wise_values.shape[1:4] + (k_size * col_wise_values.shape[4],)))
         for i in range(col_wise_values.shape[0]):
             for j in range(col_wise_values.shape[4]):
                 c_dilate[:, :, :, i + j * k_size] = col_wise_values[i][:, :, :, j] * inputs[:, :, :, j]
@@ -47,7 +47,7 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
             updated_values[i] = c_dilate * row_wise_values[i]
 
         # Dilate row wise
-        backward_output = np.zeros((row_wise_values.shape[1], input_shape[0], input_shape[1], input_shape[2]))
+        backward_output = np.zeros((row_wise_values.shape[1],) + input_shape)
         for i in range(row_wise_values.shape[0]):
             for j in range(row_wise_values.shape[3]):
                 backward_output[:, :, i + j * k_size] = updated_values[i][:, :, j]
@@ -63,14 +63,12 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
         # ['A_0', 'A_prime', ..., 'A_n']
         if axis == 0:
             cache_index = 'r_wise'
-            sub_matrices = np.empty((k_size, initial_matrix.shape[0], initial_matrix.shape[1],
-                                     initial_matrix.shape[2] // k_size, initial_matrix.shape[3]))
+            sub_matrices = np.empty((k_size, initial_matrix.shape[0], initial_matrix.shape[1], initial_matrix.shape[2] // k_size, initial_matrix.shape[3]))
             for i in range(k_size):
                 sub_matrices[i] = initial_matrix[:, :, i::k_size]
         else:
             cache_index = 'c_wise'
-            sub_matrices = np.empty((k_size, initial_matrix.shape[0], initial_matrix.shape[1], initial_matrix.shape[2],
-                                     initial_matrix.shape[3] // k_size))
+            sub_matrices = np.empty((k_size, initial_matrix.shape[0], initial_matrix.shape[1], initial_matrix.shape[2], initial_matrix.shape[3] // k_size))
             for i in range(k_size):
                 sub_matrices[i] = initial_matrix[:, :, :, i::k_size]
 
@@ -81,8 +79,7 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
 
         # save for backprop
         if store:
-            deltas = np.empty(
-                (k_size, max_values.shape[0], max_values.shape[1], max_values.shape[2], max_values.shape[3]))
+            deltas = np.empty((k_size,) + max_values.shape)
             for i in range(k_size):
                 on_off_m = switch * (max_values - sub_matrices[i])
                 deltas[i] = np.ones(on_off_m.shape) - (on_off_m // (np.abs(on_off_m) - self.epsilon))
