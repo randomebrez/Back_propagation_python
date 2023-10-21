@@ -8,7 +8,6 @@ class FlatLayer(LayerBase.__LayerBase):
     def __init__(self, is_output_layer=False):
         self.parameters = {'input_shape': (0, 0, 0)}
         super().__init__('flat', is_output_layer)
-        self.output_dimension = 1
 
     def initialize(self, input_shape):
         self.parameters['input_shape'] = input_shape
@@ -28,12 +27,13 @@ class FlatLayer(LayerBase.__LayerBase):
 
         activations = inputs.reshape((batch_size, self.output_shape[0]))
         if store or self.is_output_layer:
+            self.cache['inputs'] = inputs
             self.cache['activation_values'] = activations
         return activations
 
     # backward inputs : rows = neuron activation - column = batch index
-    def compute_backward(self, inputs):
+    def compute_backward_and_update_weights(self, bp_inputs, learning_rate):
         input_shape = self.parameters['input_shape']
-        batch_size = inputs.shape[0]
-        reshaped_inputs = inputs.reshape((batch_size,) + input_shape)
+        batch_size = bp_inputs.shape[0]
+        reshaped_inputs = bp_inputs.reshape((batch_size,) + input_shape)
         return reshaped_inputs

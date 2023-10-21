@@ -13,7 +13,6 @@ class OneToOneLayer(LayerBase.__LayerBase):
 
     def initialize(self, input_shape):
         self.output_shape = input_shape
-        self.output_dimension = len(input_shape)
 
     def compute(self, inputs, store):
         # If backpropagation is needed, store d_activation values
@@ -28,13 +27,13 @@ class OneToOneLayer(LayerBase.__LayerBase):
 
         return activations
 
-    def compute_backward(self, inputs):
+    def compute_backward_and_update_weights(self, bp_inputs, learning_rate):
         # Compute previous layer's inputs
         sigma_primes = self.cache['sigma_primes']
         if len(sigma_primes.shape) == 2:
-            return sigma_primes * inputs
+            return sigma_primes * bp_inputs
         else:
-            result = np.zeros(inputs.shape)
-            for i in range(inputs.shape[0]):
-                result[i] = np.dot(sigma_primes[i], inputs[i])
+            result = np.zeros(bp_inputs.shape)
+            for i in range(bp_inputs.shape[0]):
+                result[i] = np.dot(sigma_primes[i], bp_inputs[i])
         return result

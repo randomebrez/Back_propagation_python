@@ -134,10 +134,10 @@ def de_conv_res_shape(batch_size, convolution_result, kernel_size, filter_number
 
 
 def input_transposed_convolution_shape(batch_size, inputs, kernel_size, stride, zero_padding, input_shape):
-    stride_x, stride_y = stride[1], stride[2]
     input_depth, input_x, input_y = input_shape[0], input_shape[1], input_shape[2]
     kernel_size_x, kernel_size_y = kernel_size[1], kernel_size[2]
-    zero_padding_x, zero_padding_y = zero_padding[1], zero_padding[2]
+    stride_x, stride_y = stride[0], stride[1]
+    zero_padding_x, zero_padding_y = zero_padding[0], zero_padding[1]
 
     result_shape_x = 2 * (kernel_size_x - zero_padding_x - 1) + input_x + (input_x - 1) * (stride_x - 1)
     result_shape_y = 2 * (kernel_size_y - zero_padding_y - 1) + input_y + (input_y - 1) * (stride_y - 1)

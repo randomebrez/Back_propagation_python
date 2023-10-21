@@ -9,10 +9,9 @@ class DenseLayer(LayerBase.__LayerBase):
         self.use_bias = use_bias
         super().__init__('dense', is_output_layer)
         self.output_shape = (layer_size,)
-        self.output_dimension = 1
 
     def initialize(self, input_shape):
-        self.weight_matrix = 0.01 * (np.random.rand(input_shape[0], self.output_shape[0]) - 0.5) * 2
+        self.weight_matrix = 0.001 * np.random.rand(input_shape[0], self.output_shape[0])
         self.init_cache()
 
     def init_cache(self):
@@ -28,19 +27,17 @@ class DenseLayer(LayerBase.__LayerBase):
 
         # Store activations if asked, or for output layer
         if store or self.is_output_layer:
+            self.cache['inputs'] = inputs
             self.cache['activation_values'] = aggregation_result
 
         return aggregation_result
 
-    def compute_backward(self, inputs):
-        self.cache['back_activation_values'] = inputs
-
-        # Compute previous layer's inputs
-        return np.dot(inputs, np.transpose(self.weight_matrix))
-
-    def update_weights(self, previous_layer_activation, learning_rate):
-        bp_inputs = self.cache['back_activation_values']
+    def compute_backward_and_update_weights(self, bp_inputs, learning_rate):
+        inputs = self.cache['inputs']
         sample_number = np.shape(bp_inputs)[0]
+
+        # Compute next_layer_bp_inputs
+        next_layer_bp_inputs = np.dot(bp_inputs, np.transpose(self.weight_matrix))
 
         # Update Bias
         if self.use_bias:
@@ -48,8 +45,8 @@ class DenseLayer(LayerBase.__LayerBase):
             self.biases -= bias_variation
 
         # Update weight
-        weight_gradient = np.dot(np.transpose(previous_layer_activation), bp_inputs)
+        weight_gradient = np.dot(np.transpose(inputs), bp_inputs)
         self.weight_matrix -= (learning_rate / sample_number) * weight_gradient
 
-    def get_back_activation_values(self):
-        return self.cache['back_activation_values']
+        # Compute previous layer's inputs
+        return next_layer_bp_inputs

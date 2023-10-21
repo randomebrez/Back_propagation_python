@@ -60,9 +60,8 @@ def perceptron_auto_encoder(hidden_layer_sizes, latent_space=10, epochs=10):
 
     # Config of model with losses and metrics
     model.compile(
-        optimizer=keras.optimizers.Adam(1e-3),
-        loss="mean_squared_error",
-        metrics=["accuracy"],
+        optimizer=keras.optimizers.SGD(1e-3),
+        loss="mean_squared_error"
     )
 
     # Model training
@@ -82,10 +81,11 @@ def convolution(epochs=10):
     inputs = keras.Input(shape=(28, 28, 1))
     x = layers.Rescaling(1.0 / 255)(inputs)
 
-    x = layers.Convolution2D(3, 6, 2)(x)
-    x = layers.MaxPool2D()(x)
+    x = layers.Convolution2D(3, 6, 2)(x) # (3, 12, 12)
+    x = layers.MaxPool2D()(x) # (3, 6, 6)
+    x = layers.Convolution2D(6, 2, 2)(x) # (6, 3, 3)
     x = layers.Flatten()(x)
-    x = layers.Dense(800, "relu", name="middle_dense")(x)
+    x = layers.Dense(6*3*3, "relu", name="middle_dense")(x)
 
     outputs = layers.Dense(ds_param.class_number, activation="softmax", name="outputs")(x)
 

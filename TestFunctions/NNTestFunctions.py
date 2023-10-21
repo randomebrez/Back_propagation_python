@@ -21,7 +21,7 @@ def perceptron(hidden_layer_sizes, epochs=10):
         computer.cross_entropy_derivative,
         initial_learning_rate=0.01,
         final_learning_rate=0.001,
-        learning_rate_steps=5,
+        learning_rate_steps=10,
         epochs=epochs)
 
     start = time.time()
@@ -48,7 +48,7 @@ def auto_encoder(hidden_layer_sizes, latent_space=10, epochs=10):
         computer.distance_get,
         initial_learning_rate=0.01,
         final_learning_rate=0.001,
-        learning_rate_steps=5,
+        learning_rate_steps=10,
         epochs=epochs)
 
     start = time.time()
@@ -101,7 +101,7 @@ def perceptron_ae_combined(perceptron_hidden_layer_sizes, ae_hidden_layer_sizes,
         computer.cross_entropy_derivative,
         initial_learning_rate=0.01,
         final_learning_rate=0.001,
-        learning_rate_steps=5,
+        learning_rate_steps=10,
         epochs=epochs)
 
     start = time.time()
@@ -166,7 +166,7 @@ def auto_encoder_convolution(latent_space, epochs=10):
 
     start = time.time()
     # Run model
-    #pre_train_result = manager.test_network(ds_inputs, ds_inputs, network, model_parameters, with_details=False)
+    pre_train_result = manager.test_network(ds_inputs, ds_inputs, network, model_parameters, with_details=False)
     train_results = manager.train_network(ds_inputs, ds_inputs, network, model_parameters)
     post_train_test = manager.test_network(ds_inputs, ds_inputs, network, model_parameters, with_details=False)
 

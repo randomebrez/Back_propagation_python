@@ -71,10 +71,7 @@ class Network:
         dE_da_i = back_prop_inputs
 
         for i in range(len(self.layers) - 1, 0, -1):
-            dE_da_i = self.layers[i].compute_backward(dE_da_i)
-
-            # Update parameters
-            self.layers[i].update_weights(self.layers[i - 1].get_activation_values(), learning_rate)
+            dE_da_i = self.layers[i].compute_backward_and_update_weights(dE_da_i, learning_rate)
 
     # Tools
     def get_outputs(self):

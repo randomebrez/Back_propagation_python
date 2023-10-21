@@ -7,15 +7,14 @@ class NormalizationLayer(LayerBase.__LayerBase):
 
     def initialize(self, input_shape):
         self.output_shape = input_shape
-        self.output_dimension = len(input_shape)
 
     def compute(self, inputs, store):
-        activations = inputs # self.activation_function(inputs)
+        activations = self.activation_function(inputs)
 
         if store or self.is_output_layer:
             self.cache['activation_values'] = activations
 
         return activations
 
-    def compute_backward(self, inputs):
-        return self.activation_function(inputs)
+    def compute_backward_and_update_weights(self, bp_inputs, learning_rate):
+        return self.activation_function(bp_inputs)

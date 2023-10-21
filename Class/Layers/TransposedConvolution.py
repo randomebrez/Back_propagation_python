@@ -14,7 +14,6 @@ class TransposedConvolutionLayer(LayerBase.__LayerBase):
         self.activation_function = activation_function
         self.activation_function_with_derivative = activation_function_with_derivative
         super().__init__('transposed_convolution', is_output_layer)
-        self.output_dimension = 3
 
     def initialize(self, input_shape):
         input_depth = input_shape[0]
@@ -63,11 +62,8 @@ class TransposedConvolutionLayer(LayerBase.__LayerBase):
     def compute(self, inputs, store):
         return self.patch_compute(inputs, store)
 
-    def compute_backward(self, inputs):
-        return self.patch_compute_backward(inputs)
-
-    def update_weights(self, previous_layer_activation, learning_rate):
-        self.patch_update(self.cache['reshaped_inputs'], learning_rate)
+    def compute_backward_and_update_weights(self, bp_inputs, learning_rate):
+        return self.patch_compute_backward(bp_inputs, learning_rate)
 
     def patch_compute(self, inputs, store):
         kernel_size = self.parameters['kernel_size']
@@ -85,7 +81,7 @@ class TransposedConvolutionLayer(LayerBase.__LayerBase):
                 f_min = filter_index * reshape_inputs_shape[0]
                 f = self.filters[f_min:f_min+reshape_inputs_shape[0]]
                 product = patch * f
-                conv_result = np.sum(product, axis=(1,2,3)).reshape(batch_size, 1)
+                conv_result = np.sum(product, axis=(1,2,3)).reshape((batch_size, 1))
                 feature_maps[:, f_min:f_min+reshape_inputs_shape[0], x, y] += conv_result
 
         # If backpropagation is needed, store d_activation values
@@ -107,42 +103,39 @@ class TransposedConvolutionLayer(LayerBase.__LayerBase):
         # print("Conv FF exec time : {0}".format(round(time.time() - tick, 2)))
         return activations
 
-    def patch_compute_backward(self, inputs):
+    def patch_compute_backward(self, bp_inputs, learning_rate):
         input_shape = self.parameters['input_shape']
         filter_number = self.parameters['filter_number']
         kernel_size = self.parameters['kernel_size']
-        sigma_primes = self.cache['sigma_primes']
 
-        back_activation_values = sigma_primes * inputs
+        sigma_primes = self.cache['sigma_primes']
+        reshaped_inputs = self.cache['reshaped_inputs']
+
+        back_activation_values = sigma_primes * bp_inputs
         self.cache['back_activation_values'] = back_activation_values
 
         batch_size = back_activation_values.shape[0]
         bp_outputs = np.zeros((batch_size,) + input_shape)
-        for patch, x, y in self.patches_generator(bp_outputs, kernel_size):
-            for filter_index in range(filter_number):
+        dE_dw = np.zeros(self.filters.shape)
+
+        for filter_index in range(filter_number):
+            for patch, x, y in self.patches_generator(bp_outputs, kernel_size):
                 f_min = filter_index * input_shape[0]
                 temp = back_activation_values[:, filter_index, x, y]
                 patch += self.filters[f_min:f_min+input_shape[0]] * temp[:, np.newaxis, np.newaxis, np.newaxis]
-        return bp_outputs
 
-    def patch_update(self, previous_layer_activation, learning_rate):
-        input_shape = self.parameters['input_shape']
-        filter_number = self.parameters['filter_number']
-        kernel_size = self.parameters['kernel_size']
-        shaped_bp_values = self.cache['back_activation_values']
-        batch_size = previous_layer_activation.shape[0]
-
-        dE_dw = np.zeros(self.filters.shape)
-        for patch, x, y in self.patches_generator(previous_layer_activation, kernel_size):
-            for filter_index in range(filter_number):
-                f_min = filter_index * input_shape[0]
-                dE_dw[f_min:f_min+input_shape[0]] += np.sum(patch * shaped_bp_values[:, filter_index, x, y].reshape(batch_size, 1, 1, 1), axis=0)
+            for patch, x, y in self.patches_generator(reshaped_inputs, kernel_size):
+                for filter_index in range(filter_number):
+                    f_min = filter_index * input_shape[0]
+                    dE_dw[f_min:f_min + input_shape[0]] += np.sum(patch * back_activation_values[:, filter_index, x, y].reshape((batch_size, 1, 1, 1)), axis=0)
 
         self.filters -= learning_rate * dE_dw / batch_size
 
         if self.use_bias:
-            bias_variation = learning_rate * np.mean(shaped_bp_values, axis=(0,2,3), keepdims=True).reshape((filter_number, 1, 1))
+            bias_variation = learning_rate * np.mean(back_activation_values, axis=(0, 2, 3), keepdims=True).reshape((filter_number, 1, 1))
             self.biases -= bias_variation
+
+        return bp_outputs
 
     # Inputs are shaped entering the layer.
     # Patches generation is then with no padding and a stride of 1

@@ -58,9 +58,9 @@ class NetworkBuilder:
         layer = cd_layer.ConvolutionDotLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias, self.activation_functions[normalization_function])
         self.wip_network.layers.append(layer)
 
-    def add_conv_fft_layer(self, filter_number: int, kernel_size: int, stride: int, activation_function: str, is_output_layer=False, use_bias=True):
+    def add_convolution_layer(self, filter_number: int, kernel_size: int, stride: int, activation_function: str, is_output_layer=False, use_bias=True):
         activations = self.activation_functions[activation_function]
-        layer = c_layer.ConvolutionFFTLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias)
+        layer = c_layer.ConvolutionLayer(filter_number, kernel_size, stride, activations[0], activations[1], is_output_layer, use_bias)
         self.wip_network.layers.append(layer)
 
     def add_transposed_conv_layer(self, filter_number: int, kernel_size: int, stride: int, zero_padding: int, activation_function: str, is_output_layer=False, use_bias=True):

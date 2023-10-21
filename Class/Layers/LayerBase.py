@@ -3,14 +3,13 @@ class __LayerBase:
         self.layer_type = layer_type
         self.output_shape = (1, 1, 1)
         self.is_output_layer = is_output_layer
-        self.dimension = 1
         self.cache = {'activation_values': []}
 
     def initialize(self, input_shape):
         return
 
     def clean_cache(self):
-        self.cache = {'activation_values': []}
+        self.cache = {'activation_values': [], 'inputs': []}
 
     def update_weights(self, previous_layer_activation, learning_rate):
         return

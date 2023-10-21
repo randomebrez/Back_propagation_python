@@ -9,7 +9,6 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
     def __init__(self, kernel_size, mode='max', is_output_layer=False):
         self.parameters = {'input_shape': (0, 0, 0), 'kernel_size': kernel_size, 'mode': mode}
         super().__init__('pool', is_output_layer)
-        self.output_dimension = 3
 
     def initialize(self, input_shape):
         k_size = self.parameters['kernel_size']
@@ -28,7 +27,7 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
         return activations
 
     # backward inputs : rows = neuron activation - column = batch index
-    def compute_backward(self, inputs):
+    def compute_backward_and_update_weights(self, bp_inputs, learning_rate):
         k_size = self.parameters['kernel_size']
         input_shape = self.parameters['input_shape']
         col_wise_values = self.cache['c_wise']
@@ -38,7 +37,7 @@ class MinMaxPoolingLayer(LayerBase.__LayerBase):
         c_dilate = np.zeros((col_wise_values.shape[1:4] + (k_size * col_wise_values.shape[4],)))
         for i in range(col_wise_values.shape[0]):
             for j in range(col_wise_values.shape[4]):
-                c_dilate[:, :, :, i + j * k_size] = col_wise_values[i][:, :, :, j] * inputs[:, :, :, j]
+                c_dilate[:, :, :, i + j * k_size] = col_wise_values[i][:, :, :, j] * bp_inputs[:, :, :, j]
 
         # Update previous values in a new variable to not update cache
         # test if reshape (1, c_dilate.shape) puis multiplier le bloc marche ? et est + rapide ?
