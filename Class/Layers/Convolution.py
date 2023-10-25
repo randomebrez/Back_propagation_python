@@ -22,10 +22,8 @@ class ConvolutionLayer(LayerBase.__LayerBase):
 
         kernel_size[0] = input_depth
 
-        initializer = 0.001
-        self.filters = np.random.rand(input_depth * filter_number, kernel_size[1], kernel_size[2]) # initializer * (np.random.rand(input_depth * filter_number, kernel_size[1], kernel_size[2]) - 0.5) * 2
+        self.filters = np.random.rand(input_depth * filter_number, kernel_size[1], kernel_size[2])
         if self.parameters['use_bias']:
-            #self.biases = 2 * np.random.rand(self.parameters['filter_number'], 1, 1) - 0.5)
             self.biases = np.zeros((self.parameters['filter_number'], 1, 1))
 
         self.init_cache()
@@ -75,8 +73,7 @@ class ConvolutionLayer(LayerBase.__LayerBase):
         for patch, x, y in self.patches_generator(inputs, input_shape, kernel_size, stride, zero_padding):
             for filter_index in range(filter_number):
                 f_min = filter_index * input_shape[0]
-                f = self.filters[f_min:f_min + input_shape[0]]
-                product = patch * f
+                product = patch * self.filters[f_min:f_min + input_shape[0]]
                 conv_result = np.sum(product, axis=(1, 2, 3)).reshape((batch_size, 1))
                 feature_maps[:, f_min:f_min + input_shape[0], x, y] += conv_result
 

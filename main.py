@@ -14,11 +14,12 @@ if (launch_NN):
     nn_test.auto_encoder(ae_hidden_layers, ae_latent_space, 20)
     nn_test.perceptron_ae_combined(perceptron_hidden_layer_sizes, ae_hidden_layers, ae_latent_space)
     nn_test.convolution()
-    #nn_test.auto_encoder_convolution(ae_latent_space)
+    # nn_test.auto_encoder_semi_convolution(ae_hidden_layers, ae_latent_space)
+    #nn_test.auto_encoder_convolution(ae_latent_space, 5)
 else:
     print("Keras launched")
-    #keras_test.perceptron(perceptron_hidden_layer_sizes)
-    #keras_test.perceptron_auto_encoder(ae_hidden_layers, ae_latent_space, 20)
-    #keras_test.convolution()
+    # keras_test.perceptron(perceptron_hidden_layer_sizes)
+    # keras_test.perceptron_auto_encoder(ae_hidden_layers, ae_latent_space, 20)
+    # keras_test.convolution()
     keras_test.convolution_auto_encoder((28, 28, 1), ae_latent_space, 20)
 

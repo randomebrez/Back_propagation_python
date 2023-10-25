@@ -2,7 +2,7 @@ import numpy as np
 import time
 import Manager as manager
 import DataSets.NNFormatDS as ds_format
-import TestFunctions.NNModelBuilder as model_builder
+import TestFunctions.NNStructureBuilder as model_builder
 import DataSets.DatasetParameters as ds_parameters
 import Tools.Computations as computer
 import Class.TrainingModel as model
@@ -41,7 +41,7 @@ def auto_encoder(hidden_layer_sizes, latent_space=10, epochs=10):
     # Fetch dataset
     ds_inputs, ds_targets = ds_format.get_column_data_set_normalized(ds_param.dataset_id, ds_param.feature_name, ds_param.class_number, ds_param.normalization_constant, batch_size=ds_param.batch_size)
     # Build network
-    network = model_builder.auto_encoder(ds_param.flat_input_size, ds_param.class_number, hidden_layer_sizes, latent_space)
+    network = model_builder.auto_encoder(ds_param.flat_input_size, hidden_layer_sizes, latent_space)
     # Build training model
     model_parameters = model.ModelParameters(
         computer.mean_square_error,
@@ -64,11 +64,38 @@ def auto_encoder(hidden_layer_sizes, latent_space=10, epochs=10):
     print("Auto_encoder network execution time : {0}".format(tick - start))
     return network
 
+def auto_encoder_semi_convolution(hidden_layer_sizes, latent_space=10, epochs=10):
+    # Fetch dataset
+    ds_inputs, ds_targets = ds_format.get_image_data_set_normalized(ds_param.dataset_id, ds_param.feature_name, ds_param.class_number, ds_param.normalization_constant, batch_size=ds_param.batch_size)
+    # Build network
+    network = model_builder.ae_semi_conv(ds_param.input_shape, hidden_layer_sizes, latent_space)
+    # Build training model
+    model_parameters = model.ModelParameters(
+        computer.mean_square_error,
+        computer.distance_get,
+        initial_learning_rate=0.01,
+        final_learning_rate=0.001,
+        learning_rate_steps=10,
+        epochs=epochs)
+
+    start = time.time()
+    # Run model
+    pre_train_result = manager.test_network(ds_inputs, ds_inputs, network, model_parameters, with_details=False)
+    train_results = manager.train_network(ds_inputs, ds_inputs, network, model_parameters)
+    post_train_test = manager.test_network(ds_inputs, ds_inputs, network, model_parameters, with_details=False)
+
+    # Plot results
+    ph.plot_auto_encoder_results(network, ds_inputs[0], pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test, 36)
+
+    tick = time.time()
+    print("Semi convolutional auto_encoder network execution time : {0}".format(tick - start))
+    return network
+
 def convolution(epochs=10):
     # Fetch dataset
     ds_inputs, ds_targets = ds_format.get_image_data_set_normalized(ds_param.dataset_id, ds_param.feature_name, ds_param.class_number, ds_param.normalization_constant, batch_size=ds_param.batch_size)
     # Build network
-    network = model_builder.convolution(ds_param.input_shape, ds_param.class_number)
+    network = model_builder.convolution(ds_param.input_shape)
     # Build training model
     model_parameters = model.ModelParameters(
         computer.cross_entropy,
@@ -171,7 +198,7 @@ def auto_encoder_convolution(latent_space, epochs=10):
     post_train_test = manager.test_network(ds_inputs, ds_inputs, network, model_parameters, with_details=False)
 
     # Plot results
-    #ph.plot_perceptron_result(pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test)
+    ph.plot_auto_encoder_results(network, ds_inputs[0], pre_train_result, train_results['batch_costs'], train_results['mean_batch_costs'], post_train_test, 36)
 
     tick = time.time()
     print("Auto-encoder convolution network execution time : {0}".format(tick - start))

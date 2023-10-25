@@ -113,14 +113,14 @@ def convolution_auto_encoder(input_shape, latent_space=10, epochs=10):
     encoder_inputs = keras.Input(shape=input_shape)
     x = layers.Rescaling(1.0 / 255)(encoder_inputs)
 
-    x = layers.Convolution2D(3, 6, 2)(x)
-    x = layers.Convolution2D(10, 2, 2)(x)
+    x = layers.Convolution2D(3, 6, 2)(x)  # (3, 12, 12)
+    x = layers.MaxPool2D()(x) # (3, 6, 6)
+    x = layers.Convolution2D(6, 2, 2)(x) # (6, 3, 3)
     x = layers.Flatten()(x)
-    x = layers.Dense(128, "relu", name="encoder_dense")(x)
 
     x = layers.Dense(latent_space, "relu", name="latent_layer")(x)
 
-    x = layers.Dense(250, "relu", name="decoder_dense")(x)
+    x = layers.Dense(5 * 5 * 10, "relu", name="decoder_dense")(x)
     x = layers.Reshape((5, 5, 10))(x)
     x = layers.Conv2DTranspose(10, 3, 2)(x)
     x = layers.Conv2DTranspose(3, 6, 2)(x)

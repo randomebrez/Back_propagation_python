@@ -2,9 +2,8 @@ import numpy as np
 
 
 class Network:
-    def __init__(self, input_shape, output_shape):
+    def __init__(self, input_shape):
         self.input_shape = input_shape
-        self.output_size = output_shape
         self.output_layer_index = 0
         self.layers = []
 
@@ -43,10 +42,8 @@ class Network:
     def test(self, input_batches, target_batches, test_model, with_details=True):
         result = {'accuracy': [], 'cost_function': [], 'values': [], 'good_answers': []}
         for input_batch, target_batch in zip(input_batches, target_batches):
-
             # Feed forward
             self.feed_forward(input_batch, False)
-
             # Compute error
             _, mean_cost_fct = self.compute_error(target_batch, test_model.loss_function, test_model.loss_function_derivative)
             result['cost_function'].append(mean_cost_fct)
